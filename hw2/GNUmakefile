@@ -1,3 +1,3 @@
-prog=balloc
+prog=memoryalloc
 
 include ../GNUmakefile

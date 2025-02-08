@@ -3,7 +3,7 @@ objs+=$(addsuffix .o,$(basename $(wildcard *.c *.cc)))
 
 defines+=-D_GNU_SOURCE
 ccflags+=-g -Wall -MMD $(defines)
-ldflags+=-g
+ldflags+=-g -lm
 
 .SUFFIXES:
 
