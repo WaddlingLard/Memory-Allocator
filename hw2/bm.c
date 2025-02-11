@@ -4,8 +4,8 @@
 #include "bm.h"
 #include "utils.h"
 
-// 
-// b = 
+// Gets the size of the BitMap in bits
+// b = a BitMap 
 // Returns: size_t,
 static size_t bmbits(BM b) { 
 
@@ -13,17 +13,17 @@ static size_t bmbits(BM b) {
   return *--bits; 
 }
 
-//
-// b = 
+// Gets the size of the BitMap in bytes
+// b = a BitMap
 // Returns: size_t,
 static size_t bmbytes(BM b) { 
 
   return bits2bytes(bmbits(b)); 
 }
 
-//
-// b =
-// i =
+// Determines if the indexed location is trying to access is a valid spot
+// b = a BitMap
+// i = indexed location of a bit
 static void ok(BM b, size_t i) {
   if (i<bmbits(b))
     return;
@@ -31,8 +31,8 @@ static void ok(BM b, size_t i) {
   exit(1);
 }         
 
-//
-// bits = 
+// Creates a BitMap that can store all sorts of bits
+// bits = the size the BitMap should be
 // Returns: BM,
 extern BM bmcreate(size_t bits) {
   size_t bytes=bits2bytes(bits);
@@ -45,37 +45,37 @@ extern BM bmcreate(size_t bits) {
   return b;
 }
 
-// 
-// b =
+// Deletes the BitMap
+// b = a BitMap
 extern void bmdelete(BM b) {
   size_t *p=b;
   p--;
   mmfree(p,*p);
 }
 
-// 
-// b =
-// i = 
+// Sets a bit on the BitMap at a given location
+// b = a BitMap
+// i = offset value, simliar to indexing
 extern void bmset(BM b, size_t i) {
   ok(b,i); bitset(b+i/bitsperbyte,i%bitsperbyte);
 }
 
-// 
-// b =
-// i =
+// Clears a bit on the BitMap at a given location
+// b = a BitMap
+// i = offset value, simliar to indexing
 extern void bmclr(BM b, size_t i) {
   ok(b,i); bitclr(b+i/bitsperbyte,i%bitsperbyte);
 }
 
-// 
-// b =
-// i =
+// Tests the bit on the BitMap at a given location
+// b = a BitMap
+// i = offset value, simliar to indexing
 extern int bmtst(BM b, size_t i) {
   ok(b,i); return bittst(b+i/bitsperbyte,i%bitsperbyte);
 }
 
-// 
-// b =
+// An outputting function of the BitMap
+// b = a BitMap
 extern void bmprt(BM b) {
   for (int byte=bmbytes(b)-1; byte>=0; byte--)
     printf("%02x%s",((char *)b)[byte],(byte ? " " : "\n"));

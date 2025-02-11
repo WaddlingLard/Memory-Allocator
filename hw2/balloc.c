@@ -6,33 +6,27 @@
 #include "balloc.h"
 #include "bbm.h"
 #include "freelist.h"
-#include "bbm.h"
-#include "freelist.h"
 #include "utils.h"
 
 // Setting most amount of buddies that will exist
 #define MAX_ORDER 10
 
-// ? Likely need to create some sort of struct to store the buddies
-// ? The buddy is used to store an address to a section on the "BitMap"
-// ? and also will have a location stored for a "FreeList"
+// A struct to store buddy information
 struct Buddy {
 
     // * UNSURE ON THIS SO FAR
     // ? A pointer to store location for the "BitMap"
 
     // ? A pointer to store a "Free List"
+    FreeList location;
     
 } typedef Buddy;
 
 // The representation of a Balloc
-// * I do not believe you create an actual struct of Balloc, that is supposed to be a void pointer (Could be wrong)
 struct Rep {
     
     // A pointer that will be the pool
     void * pool;
-
-    // Another item that will set the [0] l: lowest power, [1] u: highest power, [2] r: number of buddies (u - l + 1)
 
     // Another item that will set the [0] l: lowest power, [1] u: highest power, [2] r: number of buddies (u - l + 1)
     int managementData[3];
@@ -40,7 +34,9 @@ struct Rep {
     // Something to hold the buddies that will be ranging from 0:r-1
     Buddy buddies[MAX_ORDER];
 
-    // Size should probably be saved? likely in managementData
+    // Size is saved as well
+    int size;
+
 } typedef Rep;
 
 // Creates a pool of memory that can be chunked off into
@@ -69,7 +65,7 @@ Balloc bcreate(unsigned int size, int l, int u) {
     upper = u;
 
     // Checking for valid size call
-    if (requestedSize < 0) {
+    if (requestedSize <= 0) {
         // Size is not a positive number
 
         // Output error message
@@ -79,20 +75,16 @@ Balloc bcreate(unsigned int size, int l, int u) {
 
     // Checking size of l (lowest) and u (highest) are valid
     if (lower < 0 || upper < 0) {
-    if (lower < 0 || upper < 0) {
         // Lower or upper bounds is not a positive number
 
         // Output error message
         fprintf(stderr, "Invalid size constraints provided. l and u should be nonzero positive numbers!");
         exit(1);
     } else if (lower > upper) {
-        exit(1);
-    } else if (lower > upper) {
         // Lower bounds is greater than upper bounds (should not be possible)
         
         // Output error message
         fprintf(stderr, "Upper bound is less than lower bounds. That makes no sense...");
-        exit(1);
         exit(1);
     }
 
@@ -129,6 +121,9 @@ Balloc bcreate(unsigned int size, int l, int u) {
     newBalloc.managementData[0] = lower;
     newBalloc.managementData[1] = upper;
     newBalloc.managementData[2] = numberOfBuddies;
+
+    // Storing size
+    newBalloc.size = actualSize;
     
     // Creating the buddies and adding into newBalloc
     for (int i = lower; i <= upper; i++) {
@@ -165,7 +160,7 @@ void * balloc(Balloc pool, unsigned int size) {
 
 // Frees the block of memory that is allocated 
 // pool = A Balloc struct that contains the memory map
-// mem = A void pointer that is pointing at the block of memory to be deallocated
+// * mem = A void pointer that is pointing at the block of memory to be deallocated
 void bfree(Balloc pool, void *mem) {
 
     return;
@@ -173,7 +168,7 @@ void bfree(Balloc pool, void *mem) {
 
 // Grabs the size of the free memory block 
 // pool = A Balloc struct that contains the memory map
-// mem = A void pointer that is pointing at the block of memory to grab its size
+// * mem = A void pointer that is pointing at the block of memory to grab its size
 unsigned int bsize(Balloc pool, void *mem) {
 
     return 0;

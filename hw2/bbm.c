@@ -2,6 +2,10 @@
 #include "bm.h"
 #include "utils.h"
 
+//
+// size = 
+// e =
+// Returns: size_t, 
 static size_t mapsize(size_t size, int e) {
   size_t blocksize=e2size(e);
   size_t blocks=divup(size,blocksize);
@@ -9,49 +13,95 @@ static size_t mapsize(size_t size, int e) {
   return buddies;
 }
 
+//
+// * base =
+// * mem = 
+// e =
+// Returns: size_t,
 static size_t bitaddr(void *base, void *mem, int e) {
   size_t addr=baddrclr(base,mem,e)-base;
   size_t blocksize=e2size(e);
   return addr/blocksize/2;
 }
 
+//
+// size =
+// e =
+// Returns: BBM, 
 extern BBM bbmcreate(size_t size, int e) {
   return bmcreate(mapsize(size,e));
 }
 
+//
+// b =
 extern void bbmdelete(BBM b) {
   bmdelete(b);
 }
 
+//
+// b =
+// * base =
+// * mem =
+// e =
 extern void bbmset(BBM b, void *base, void *mem, int e) {
   bmset(b,bitaddr(base,mem,e));
 }
 
+//
+// b =
+// * base =
+// * mem =
+// e =
 extern void bbmclr(BBM b, void *base, void *mem, int e) {
   bmclr(b,bitaddr(base,mem,e));
 }
 
+// 
+// b =
+// * base = 
+// * mem = 
+// e =
 extern int bbmtst(BBM b, void *base, void *mem, int e) {
   return bmtst(b,bitaddr(base,mem,e));
 }
 
-extern void bbmprt(BBM b) { bmprt(b); }
+// 
+// b = 
+extern void bbmprt(BBM b) { 
+  bmprt(b); 
+}
 
+//
+// * base = 
+// * mem =
+// e = 
 extern void *baddrset(void *base, void *mem, int e) {
   unsigned int mask=1<<e;
   return base+((mem-base)|mask);
 }
 
+//
+// * base =
+// * mem = 
+// e =
 extern void *baddrclr(void *base, void *mem, int e) {
   unsigned int mask=~(1<<e);
   return base+((mem-base)&mask);
 }
 
+// 
+// * base =
+// * mem = 
+// e =
 extern void *baddrinv(void *base, void *mem, int e) {
   unsigned int mask=1<<e;
   return base+((mem-base)^mask);
 }
 
+// 
+// * base =
+// * mem = 
+// e =
 extern int baddrtst(void *base, void *mem, int e) {
   unsigned int mask=1<<e;
   return (mem-base)&mask;

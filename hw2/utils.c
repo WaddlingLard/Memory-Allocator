@@ -32,10 +32,7 @@ void * mmalloc(size_t size) {
 
 // Frees the address space from a given range, that is given with
 // a pointer to the start and a size of how many addresses should be unmapped
-// p = a pointer to the location where the addresses have been mapped (It should be at the base)
-// size = the amount of address space that should be unmapped 
-// a pointer to the start and a size of how many addresses should be unmapped
-// p = a pointer to the location where the addresses have been mapped (It should be at the base)
+// * p = a pointer to the location where the addresses have been mapped (It should be at the base)
 // size = the amount of address space that should be unmapped 
 void mmfree(void *p, size_t size) {
 
@@ -64,7 +61,7 @@ size_t e2size(int e) {
 // size = The size provided 
 // Returns: int, the exponent that reflects 2^e = size
 int size2e(size_t size) {
-
+    
     int e = 0;
     size_t value = size;
 
@@ -108,7 +105,7 @@ size_t bits2bytes(size_t bits) {
 }
 
 // Sets the bit at a provided address via void pointer
-// p = Void pointer of the address that will be set
+// * p = Void pointer of the address that will be set
 // bit = What the address is being set with
 void bitset(void * p, int bit) {
 
@@ -117,21 +114,28 @@ void bitset(void * p, int bit) {
 }
 
 //
-// p = Void pointer of the address what will be set
+// * p = Void pointer of the address what will be set
 // bit = 
 void bitclr(void * p, int bit) {
 
+    // Clearing bit at the location of the void pointer
+    // int masked = *((int * ) p) & bit;
+    
 }
 
 // Inverts the bit at a provided address via void pointer
-// p = Void pointer of the address what will be set
+// * p = Void pointer of the address what will be set
 // bit = What will be inverted to be set in the address
 void bitinv(void * p, int bit) {
 
+    // Inverting bit at the location of the void pointer
+    // int invert = ~*((int *) p);
+
+    // p = &invert;
 }
 
 // Tests the bit at the provided address via void pointer
-// p = Void pointer of the bit's address that will be tested
+// * p = Void pointer of the bit's address that will be tested
 // bit = What will be tested against the bit stored in the address
 // Returns: int, 1 for true, 0 for false
 int bittst(void * p, int bit) {
