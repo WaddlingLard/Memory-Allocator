@@ -5,16 +5,38 @@
 #include "utils.h"
 #include "utils.h"
 
+// Tests for bcreate
+
+// Tests for balloc
+
+// Tests for bfree
+
+// Tests for bdelete
+
+// Tests for bprint
+
+// Tests for fail conditions
+
 int main() {
 
     Balloc pool = bcreate(32, 5, 5);
+    
+    // Running bcreate tests
 
-    // printf("Allocator Address: %p\n", pool);
 
-    // printf("65's exponent on 2-base is: %d\n", size2e(65));
-    // printf("64's exponent on 2-base is: %d\n", size2e(64));
-    // printf("128's exponent on 2-base is: %d\n", size2e(128));
-    // printf("256's exponent on 2-base is: %d\n", size2e(256));
+    // Running balloc tests
+
+    
+    // Running bfree tests
+
+
+    // Running bdelete tests
+
+
+    // Running bprint tests
+
+
+    // Commented out tests (should intentionally fail)
 
     return 0;
 }

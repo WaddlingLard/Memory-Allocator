@@ -129,9 +129,10 @@ void bitclr(void * p, int bit) {
 void bitinv(void * p, int bit) {
 
     // Inverting bit at the location of the void pointer
-    // int invert = ~*((int *) p);
+    // * Could be incorrect
+    int invert = ~bit;
 
-    // p = &invert;
+    bitset(p, invert);
 }
 
 // Tests the bit at the provided address via void pointer

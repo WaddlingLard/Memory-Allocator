@@ -9,18 +9,20 @@
 #include "utils.h"
 
 // Setting most amount of buddies that will exist
-#define MAX_ORDER 10
+// * MAYBE NOT
+// #define MAX_ORDER 10
 
 // A struct to store buddy information
-struct Buddy {
+// * Maybe just use a pointer to a freelist instead
+// struct Buddy {
 
     // * UNSURE ON THIS SO FAR
     // ? A pointer to store location for the "BitMap"
 
     // ? A pointer to store a "Free List"
-    FreeList location;
+    // FreeList location;
     
-} typedef Buddy;
+// } typedef Buddy;
 
 // The representation of a Balloc
 struct Rep {
@@ -32,7 +34,8 @@ struct Rep {
     int managementData[3];
 
     // Something to hold the buddies that will be ranging from 0:r-1
-    Buddy buddies[MAX_ORDER];
+    // Buddy buddies[MAX_ORDER];
+    FreeList freeList;
 
     // Size is saved as well
     int size;
@@ -49,20 +52,17 @@ struct Rep {
 Balloc bcreate(unsigned int size, int l, int u) {
 
     // Used for keeping track of the size for the memory pool
-    unsigned int requestedSize = 0, actualSize = 0;
+    const unsigned int requestedSize = size;
+    unsigned int actualSize;
 
     // Highest block size that memory can be allocated from the pool
-    int highestAllocationSize = 0;
+    int highestAllocationSize;
 
     // Keeping track of 'r', how many buddies will exist in the allocator
-    int numberOfBuddies = 0;
+    int numberOfBuddies;
     
     // Used for aliasing
-    int lower = 0, upper = 0;
-
-    requestedSize = size;
-    lower = l;
-    upper = u;
+    const int lower = l, upper = u;
 
     // Checking for valid size call
     if (requestedSize <= 0) {
@@ -101,7 +101,7 @@ Balloc bcreate(unsigned int size, int l, int u) {
         exit(1);
     }
 
-    // ? Creating Balloc struct to have the pool initialized (I believe this is the right way going around this)
+    // Creating Balloc struct to have the pool initialized
     Rep newBalloc;
 
     // Mapping the memory in the address space to be used
@@ -124,11 +124,9 @@ Balloc bcreate(unsigned int size, int l, int u) {
 
     // Storing size
     newBalloc.size = actualSize;
-    
-    // Creating the buddies and adding into newBalloc
-    for (int i = lower; i <= upper; i++) {
 
-    }
+    // Adding the freelist to the newBalloc
+    newBalloc.freeList = freelistcreate(actualSize, lower, upper);
 
     // Saving an address to store the allocator
     // mmalloc() is very useful, it is very much like malloc() but you just need to keep track of the address
@@ -146,6 +144,40 @@ Balloc bcreate(unsigned int size, int l, int u) {
 // pool = A Balloc struct that contains the memory map
 void bdelete(Balloc pool) {
 
+    // Verify pool
+    if (pool == NULL) {
+        // Pool does not exist
+
+        // Ouputting error message
+        fprintf(stderr, "Pool does not exist!");
+        exit(1);
+    }
+
+    // Grabbing representation of pool
+    Rep * ballocPool = (Rep *)pool;
+
+    // Grabbing freelist
+    FreeList list = ballocPool->freeList;
+
+    // Grabbing mapped pool
+    void * poolAddr = ballocPool->pool;
+
+    // Grabbing lower/upper bounds and the size
+    int lower = ballocPool->managementData[0];
+    int upper = ballocPool->managementData[1];
+    int size = ballocPool->size;
+
+    // Unmapping the freelist
+    freelistdelete(list, lower, upper);
+
+    // Unmapping the pool
+    mmfree(poolAddr, size);
+
+    // Undoing the memcpy from creation of allocator
+    // * maybe don't actually need this
+    // free(pool);
+
+    // Allocator has been deleted!
     return;
 }
 
@@ -155,7 +187,48 @@ void bdelete(Balloc pool) {
 // Returns: void *, the address where the allocation was initiated
 void * balloc(Balloc pool, unsigned int size) {
 
-    return 0;
+    // Used for keeping track of the size
+    const int requestedSize = size;
+    int actualSizeE;
+
+    // Check parameters
+    if (size < 1) {
+        // Size requested is nothing
+
+        // Outputting error message
+        fprintf(stderr, "Size requested is not valid (must be positive integer)");
+        exit(1);
+    } else {
+        // Normalize size exponent
+        actualSizeE = size2e(requestedSize);
+    }
+
+    // Verify pool
+    if (pool == NULL) {
+        // Pool does not exist
+
+        // Ouputting error message
+        fprintf(stderr, "Pool does not exist!");
+        exit(1);
+    }
+
+    // Grabbing representation of pool
+    Rep * ballocPool = (Rep *)pool;
+
+    // Accessing the freelist to allocate
+    FreeList list = ballocPool->freeList;
+
+    // Grabbing base address of pool to allocate memory
+    void * poolAddr = ballocPool->pool;
+
+    // Grabbing lower constraint
+    int lower = ballocPool->managementData[0];
+
+    // Calling the freelist to allocate the memory
+    // * what if cannot allocate?
+    void * allocatedSpot = freelistalloc(list, poolAddr, actualSizeE, lower);
+
+    return allocatedSpot;
 }
 
 // Frees the block of memory that is allocated 
@@ -163,10 +236,21 @@ void * balloc(Balloc pool, unsigned int size) {
 // * mem = A void pointer that is pointing at the block of memory to be deallocated
 void bfree(Balloc pool, void *mem) {
 
+    // Verify pool
+    if (pool == NULL) {
+        // Pool does not exist
+
+        // Ouputting error message
+        fprintf(stderr, "Pool does not exist!");
+        exit(1);
+    }
+
+    
+
     return;
 }
 
-// Grabs the size of the free memory block 
+// Grabs the size of the memory block 
 // pool = A Balloc struct that contains the memory map
 // * mem = A void pointer that is pointing at the block of memory to grab its size
 unsigned int bsize(Balloc pool, void *mem) {
