@@ -112,8 +112,8 @@ void bitset(void * p, int bit) {
     // Converting pointer to be a char one
     unsigned char * bitPtr = (unsigned char *) p;
 
-    // Masking bit to set
-    bitPtr[bit] |= 1;
+    // Masking bit to set by dereferncing pointer and applying bitwise
+    *bitPtr |= (1 << bit);
 }
 
 // Clears the bit at a provided address via a void pointer
@@ -124,8 +124,12 @@ void bitclr(void * p, int bit) {
     // Converting pointer to be a char one
     unsigned char * bitPtr = (unsigned char *) p;
 
-    // Clearing bit at the location of the void pointer
-    bitPtr[bit] = 0;
+    // Creating bit to clear one at the address
+    unsigned int 
+
+    // Clearing bit at the location of the dereferenced pointer
+    // by using a masked bit that is inverted
+    *bitPtr &= ~(1 << bit);
     
 }
 
@@ -137,8 +141,11 @@ void bitinv(void * p, int bit) {
     // Converting pointer to be a char one
     unsigned char * bitPtr = (unsigned char *) p;
 
-    // Inverting bit at location 
-    bitPtr[bit] = ~bitPtr[bit];
+    // Creating bit to invert one at the address
+    unsigned int mask = (1 << bit)
+
+    // Inverting bit at location by dereferencing and applying bitwise 
+    *bitPtr ^= mask;
 }
 
 // Tests the bit at the provided address via void pointer
@@ -146,10 +153,10 @@ void bitinv(void * p, int bit) {
 // bit = Location of the bit in the address
 // ? Returns: int, 1 for true, 0 for false
 int bittst(void * p, int bit) {
-    
-    // Creating bit to compare to the one at the address
-    unsigned int mask = 1 << bit;
 
-    // Grabbing the integer at the void pointer address and comparing
-    return ((unsigned char *)p)[bit] & mask;
+    // Converting pointer to be a char one
+    unsigned char * bitPtr = (unsigned char *) p;
+
+    // Testing bit at the location with the 1 using bitwise
+    return (*bitPtr >> bit) & 1;
 }
