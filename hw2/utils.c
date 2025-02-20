@@ -125,11 +125,11 @@ void bitclr(void * p, int bit) {
     unsigned char * bitPtr = (unsigned char *) p;
 
     // Creating bit to clear one at the address
-    unsigned int 
+    unsigned int mask = ~(1 << bit);
 
     // Clearing bit at the location of the dereferenced pointer
     // by using a masked bit that is inverted
-    *bitPtr &= ~(1 << bit);
+    *bitPtr &= mask;
     
 }
 
@@ -142,9 +142,9 @@ void bitinv(void * p, int bit) {
     unsigned char * bitPtr = (unsigned char *) p;
 
     // Creating bit to invert one at the address
-    unsigned int mask = (1 << bit)
+    unsigned int mask = (1 << bit);
 
-    // Inverting bit at location by dereferencing and applying bitwise 
+    // Inverting bit at location by dereferencing and applying bitwise
     *bitPtr ^= mask;
 }
 

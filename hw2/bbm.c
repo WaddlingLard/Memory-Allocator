@@ -13,10 +13,10 @@ static size_t mapsize(size_t size, int e) {
   return buddies;
 }
 
-// 
-// * base =
-// * mem = 
-// e =
+// Gets the address of the bit
+// * base = The base address of the memory pool
+// ? * mem = The location of the byte
+// e = Size of the block exponent
 // Returns: size_t,
 static size_t bitaddr(void *base, void *mem, int e) {
   size_t addr=baddrclr(base,mem,e)-base;
@@ -37,20 +37,20 @@ extern BBM bbmcreate(size_t size, int e) {
 extern void bbmdelete(BBM b) {
   bmdelete(b);
 }
-
-//
+ 
+// Sets a bit using the normal bit map method
 // b = A buddy bit map
 // * base = The base address of the memory pool
-// * mem =
+// * mem = The address of where the operation to occur
 // e = What bit in the byte (2^N base)
 extern void bbmset(BBM b, void *base, void *mem, int e) {
   bmset(b,bitaddr(base,mem,e));
 }
 
-//
+// Clears a bit using the normal bit map method
 // b = A buddy bit map
 // * base = The base address of the memory pool
-// * mem =
+// * mem = The address of where the operation to occur
 // e = What bit in the byte (2^N base)
 extern void bbmclr(BBM b, void *base, void *mem, int e) {
   bmclr(b,bitaddr(base,mem,e));
@@ -59,7 +59,7 @@ extern void bbmclr(BBM b, void *base, void *mem, int e) {
 // Tests the bit at a provided address using the normal bit map function
 // b = A buddy bit map
 // * base = The base address of the memory pool
-// * mem = 
+// * mem = The address of where the operation to occur
 // e = Size of the block exponent
 // Returns: int, 
 extern int bbmtst(BBM b, void *base, void *mem, int e) {
@@ -72,9 +72,9 @@ extern void bbmprt(BBM b) {
   bmprt(b); 
 }
 
-//
+// Sets a bit at a specified address and index
 // * base = The base address of the memory pool
-// * mem =
+// * mem = The address of where the operation to occur
 // e = What bit in the byte (2^N base) 
 // Returns: void *, 
 extern void *baddrset(void *base, void *mem, int e) {
@@ -82,9 +82,9 @@ extern void *baddrset(void *base, void *mem, int e) {
   return base+((mem-base)|mask);
 }
 
-//
+// Clears a bit at a specified address and index
 // * base = The base address of the memory pool
-// * mem = 
+// * mem = The address of where the operation to occur
 // e = What bit in the byte (2^N base)
 // Returns: void *,
 extern void *baddrclr(void *base, void *mem, int e) {
@@ -92,9 +92,9 @@ extern void *baddrclr(void *base, void *mem, int e) {
   return base+((mem-base)&mask);
 }
 
-// 
+// Inverts a bit at a specified address and index
 // * base = The base address of the memory pool
-// * mem = 
+// * mem = The address of where the operation to occur
 // e = What bit in the byte (2^N base)
 // Returns: void *, 
 extern void *baddrinv(void *base, void *mem, int e) {
@@ -103,8 +103,8 @@ extern void *baddrinv(void *base, void *mem, int e) {
 }
 
 // Tests a bit at a provided address
-// * base = The base of the pool
-// * mem = The address of where the bit is located
+// * base = The base address of the memory pool
+// * mem = The address of where the operation to occur
 // e = What bit in the byte (2^N base)
 // Returns: int, 1 for pass 0 for nope
 extern int baddrtst(void *base, void *mem, int e) {
