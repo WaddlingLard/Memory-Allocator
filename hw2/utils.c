@@ -106,44 +106,50 @@ size_t bits2bytes(size_t bits) {
 
 // Sets the bit at a provided address via void pointer
 // * p = Void pointer of the address that will be set
-// bit = What the address is being set with
+// bit = Location of the bit in the address
 void bitset(void * p, int bit) {
 
-    // Storing the location of the bit into the void pointer
-    p = &bit;
+    // Converting pointer to be a char one
+    unsigned char * bitPtr = (unsigned char *) p;
+
+    // Masking bit to set
+    bitPtr[bit] |= 1;
 }
 
-//
+// Clears the bit at a provided address via a void pointer
 // * p = Void pointer of the address what will be set
-// bit = 
+// bit = Location of the bit in the address
 void bitclr(void * p, int bit) {
 
+    // Converting pointer to be a char one
+    unsigned char * bitPtr = (unsigned char *) p;
+
     // Clearing bit at the location of the void pointer
-    // int masked = *((int * ) p) & bit;
+    bitPtr[bit] = 0;
     
 }
 
 // Inverts the bit at a provided address via void pointer
-// * p = Void pointer of the address what will be set
-// bit = What will be inverted to be set in the address
+// * p = Void pointer of the location where the inversion will occur
+// bit = Location of the bit in the address
 void bitinv(void * p, int bit) {
 
-    // Inverting bit at the location of the void pointer
-    // * Could be incorrect
-    int invert = ~bit;
+    // Converting pointer to be a char one
+    unsigned char * bitPtr = (unsigned char *) p;
 
-    bitset(p, invert);
+    // Inverting bit at location 
+    bitPtr[bit] = ~bitPtr[bit];
 }
 
 // Tests the bit at the provided address via void pointer
 // * p = Void pointer of the bit's address that will be tested
-// bit = What will be tested against the bit stored in the address
-// Returns: int, 1 for true, 0 for false
+// bit = Location of the bit in the address
+// ? Returns: int, 1 for true, 0 for false
 int bittst(void * p, int bit) {
+    
+    // Creating bit to compare to the one at the address
+    unsigned int mask = 1 << bit;
 
-    // Grabbing the integer at the void pointer address
-    int test = *((int *) p);
-
-    // Equate logic
-    return bit == test;
+    // Grabbing the integer at the void pointer address and comparing
+    return ((unsigned char *)p)[bit] & mask;
 }

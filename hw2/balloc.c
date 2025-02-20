@@ -4,25 +4,8 @@
 #include <string.h>
 
 #include "balloc.h"
-#include "bbm.h"
 #include "freelist.h"
 #include "utils.h"
-
-// Setting most amount of buddies that will exist
-// * MAYBE NOT
-// #define MAX_ORDER 10
-
-// A struct to store buddy information
-// * Maybe just use a pointer to a freelist instead
-// struct Buddy {
-
-    // * UNSURE ON THIS SO FAR
-    // ? A pointer to store location for the "BitMap"
-
-    // ? A pointer to store a "Free List"
-    // FreeList location;
-    
-// } typedef Buddy;
 
 // The representation of a Balloc
 struct Rep {
@@ -105,7 +88,7 @@ Balloc bcreate(unsigned int size, int l, int u) {
     Rep newBalloc;
 
     // Mapping the memory in the address space to be used
-    void * poolAddr = mmalloc(actualSize);
+    const void * poolAddr = mmalloc(actualSize);
 
     // Save address into newBalloc for start of pool
     newBalloc.pool = poolAddr;
@@ -130,7 +113,7 @@ Balloc bcreate(unsigned int size, int l, int u) {
 
     // Saving an address to store the allocator
     // mmalloc() is very useful, it is very much like malloc() but you just need to keep track of the address
-    void * ballocAddr = mmalloc(sizeof(Rep));
+    const void * ballocAddr = mmalloc(sizeof(Rep));
 
     // Copy the memory off the stack from newBalloc to an address (ballocAddr)
     memcpy(ballocAddr, &newBalloc, sizeof(Rep));
@@ -145,7 +128,7 @@ Balloc bcreate(unsigned int size, int l, int u) {
 void bdelete(Balloc pool) {
 
     // Verify pool
-    if (pool == NULL) {
+    if (!pool) {
         // Pool does not exist
 
         // Ouputting error message
@@ -154,18 +137,18 @@ void bdelete(Balloc pool) {
     }
 
     // Grabbing representation of pool
-    Rep * ballocPool = (Rep *)pool;
+    const Rep * ballocPool = (Rep *)pool;
 
     // Grabbing freelist
-    FreeList list = ballocPool->freeList;
+    const FreeList list = ballocPool->freeList;
 
     // Grabbing mapped pool
-    void * poolAddr = ballocPool->pool;
+    const void * poolAddr = ballocPool->pool;
 
     // Grabbing lower/upper bounds and the size
-    int lower = ballocPool->managementData[0];
-    int upper = ballocPool->managementData[1];
-    int size = ballocPool->size;
+    const int lower = ballocPool->managementData[0];
+    const int upper = ballocPool->managementData[1];
+    const int size = ballocPool->size;
 
     // Unmapping the freelist
     freelistdelete(list, lower, upper);
@@ -204,7 +187,7 @@ void * balloc(Balloc pool, unsigned int size) {
     }
 
     // Verify pool
-    if (pool == NULL) {
+    if (!pool) {
         // Pool does not exist
 
         // Ouputting error message
@@ -213,20 +196,20 @@ void * balloc(Balloc pool, unsigned int size) {
     }
 
     // Grabbing representation of pool
-    Rep * ballocPool = (Rep *)pool;
+    const Rep * ballocPool = (Rep *)pool;
 
     // Accessing the freelist to allocate
-    FreeList list = ballocPool->freeList;
+    const FreeList list = ballocPool->freeList;
 
     // Grabbing base address of pool to allocate memory
-    void * poolAddr = ballocPool->pool;
+    const void * poolAddr = ballocPool->pool;
 
     // Grabbing lower constraint
-    int lower = ballocPool->managementData[0];
+    const int lower = ballocPool->managementData[0];
 
     // Calling the freelist to allocate the memory
     // * what if cannot allocate?
-    void * allocatedSpot = freelistalloc(list, poolAddr, actualSizeE, lower);
+    const void * allocatedSpot = freelistalloc(list, poolAddr, actualSizeE, lower);
 
     return allocatedSpot;
 }
@@ -237,15 +220,28 @@ void * balloc(Balloc pool, unsigned int size) {
 void bfree(Balloc pool, void *mem) {
 
     // Verify pool
-    if (pool == NULL) {
+    if (!pool) {
         // Pool does not exist
 
-        // Ouputting error message
+        // Outputting error message
         fprintf(stderr, "Pool does not exist!");
         exit(1);
     }
 
-    
+    // Verify memory address to free
+    if (!mem) {
+        // Memory is not at a valid location
+        
+        // Outputting error message
+        fprintf(stderr, "Memory is not a valid address");
+        exit(1);
+    }
+
+    // Grab the representation of the pool
+    const Rep * ballocPool = (Rep *)pool;
+
+    // Do more things
+    // ballocPool->
 
     return;
 }
@@ -254,6 +250,25 @@ void bfree(Balloc pool, void *mem) {
 // pool = A Balloc struct that contains the memory map
 // * mem = A void pointer that is pointing at the block of memory to grab its size
 unsigned int bsize(Balloc pool, void *mem) {
+
+    // Verify pool
+    if (!pool) {
+        // Pool does not exist
+
+        // Outputting error message
+        fprintf(stderr, "Pool does not exist!");
+        exit(1);
+    }
+
+    // Verify memory address
+    if (!mem) {
+        // Memory is not at a valid location
+        
+        // Outputting error message
+        fprintf(stderr, "Memory is not a valid address");
+        exit(1);
+    }
+
 
     return 0;
 }
