@@ -87,8 +87,30 @@ extern int bmtst(BM b, size_t i)
 
 // An outputting function of the BitMap
 // b = a BitMap
+// extern void bmprt(BM b)
+// {
+//   for (int byte = bmbytes(b) - 1; byte >= 0; byte--)
+//     printf("%02x%s", ((char *)b)[byte], (byte ? " " : "\n"));
+// }
+
+// Prints out the bitmap in binary as opposed to hexadecimal
 extern void bmprt(BM b)
 {
+  // Converting to a char pointer
+  char *bitmapPtr = (char *)b;
+
+  // Loop through all bytes in the bitmap
   for (int byte = bmbytes(b) - 1; byte >= 0; byte--)
-    printf("%02x%s", ((char *)b)[byte], (byte ? " " : "\n"));
+  {
+    // Loop through the current byte
+    for (int bit = 7; bit >= 0; bit--)
+    {
+      // Shifting the bit to the end and masking to know what
+      // value is there
+      printf("%d", ((bitmapPtr[byte] >> bit) & 1));
+    }
+
+    // Whitespace for the next byte
+    printf("%s", (byte ? " " : "\n"));
+  }
 }
