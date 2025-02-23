@@ -91,13 +91,13 @@ Balloc bcreate(unsigned int size, int l, int u)
     }
 
     // Creating Balloc struct to have the pool initialized
-    Rep newBalloc;
+    Rep *newBalloc = mmalloc(sizeof(Rep));
 
     // Mapping the memory in the address space to be used
     void *poolAddr = mmalloc(actualSize);
 
     // Save address into newBalloc for start of pool
-    newBalloc.pool = poolAddr;
+    newBalloc->pool = poolAddr;
 
     // Getting number of buddies for the pool
     // The +1 is there for the [0:r-1] constraint
@@ -107,25 +107,18 @@ Balloc bcreate(unsigned int size, int l, int u)
 
     // Storing management data information into the newBalloc
     // Lower, Upper, and Number of Buddies
-    newBalloc.managementData[0] = lower;
-    newBalloc.managementData[1] = upper;
-    newBalloc.managementData[2] = numberOfBuddies;
+    newBalloc->managementData[0] = lower;
+    newBalloc->managementData[1] = upper;
+    newBalloc->managementData[2] = numberOfBuddies;
 
     // Storing size
-    newBalloc.size = actualSize;
+    newBalloc->size = actualSize;
 
     // Adding the freelist to the newBalloc
-    newBalloc.freeList = freelistcreate(actualSize, lower, upper, poolAddr);
-
-    // Saving an address to store the allocator
-    // mmalloc() is very useful, it is very much like malloc() but you just need to keep track of the address
-    void *ballocAddr = mmalloc(sizeof(Rep));
-
-    // Copy the memory off the stack from newBalloc to an address (ballocAddr)
-    memcpy(ballocAddr, &newBalloc, sizeof(Rep));
+    newBalloc->freeList = freelistcreate(actualSize, lower, upper, poolAddr);
 
     // Returning the address of the created Balloc
-    return ballocAddr;
+    return (void *)newBalloc;
 }
 
 // Deletes the pool of memory that was created
@@ -133,24 +126,39 @@ Balloc bcreate(unsigned int size, int l, int u)
 void bdelete(Balloc pool)
 {
 
-    // Verify pool
-    if (!pool)
+    // Grabbing representation of pool
+    Rep *ballocPool = (Rep *)pool;
+
+    // Verify allocator
+    if (ballocPool == NULL)
     {
-        // Pool does not exist
+        // Allocator does not exist
 
         // Ouputting error message
-        fprintf(stderr, "Pool does not exist!");
+        fprintf(stderr, "Pool does not exist!\n");
         exit(1);
     }
 
-    // Grabbing representation of pool
-    const Rep *ballocPool = (Rep *)pool;
+    // 3 Things need to be deleted and NULLed
+    // 1. Pool Address
+    // 2. Freelist
+    // 3. Management Data
 
+    // 1. Pool Address
+    if (ballocPool->pool != NULL)
+    {
+        // Base address is still valid
+
+        // Unmap the memory pool
+        mmfree(ballocPool->pool, ballocPool->size);
+
+        // Make sure to set the address to NULL
+        ballocPool->pool = NULL;
+    }
+
+    // 2. Freelist
     // Grabbing freelist
     const FreeList list = ballocPool->freeList;
-
-    // Grabbing mapped pool
-    void *poolAddr = ballocPool->pool;
 
     // Grabbing lower/upper bounds and the size
     const int lower = ballocPool->managementData[0];
@@ -160,12 +168,15 @@ void bdelete(Balloc pool)
     // Unmapping the freelist
     freelistdelete(list, lower, upper);
 
-    // Unmapping the pool
-    mmfree(poolAddr, size);
+    // 3. Management Data
+    // Setting all values to 0
+    ballocPool->managementData[0] = 0;
+    ballocPool->managementData[1] = 0;
+    ballocPool->managementData[2] = 0;
+    ballocPool->size = 0;
 
-    // Undoing the memcpy from creation of allocator
-    // * maybe don't actually need this
-    // free(pool);
+    // Unmapping the Allocator
+    mmfree(ballocPool, sizeof(Rep));
 
     // Allocator has been deleted!
     return;
@@ -219,10 +230,30 @@ void *balloc(Balloc pool, unsigned int size)
     // Grabbing lower constraint
     const int lower = ballocPool->managementData[0];
 
+    // Grabbing upper constrant (verification of allocation requested)
+    const int upper = ballocPool->managementData[1];
+
+    // Checking if allocation is a valid size in what is requested
+    if (requestedSize > e2size(upper))
+    {
+        // Allocation is not within valid constraints
+
+        // Outputting error message
+        fprintf(stderr, "Cannot allocate this amount as it is above the allocators constraints (%d)!\n", requestedSize);
+        exit(1);
+    }
+
+    // Checking if the allocation exponent needs to be set on lower constraint if value is too small
+    if (actualSizeE < lower)
+    {
+        // Normalizing exponent to lower
+        actualSizeE = lower;
+    }
+
     // Calling the freelist to allocate the memory
-    // * what if cannot allocate?
     void *allocatedSpot = freelistalloc(list, poolAddr, actualSizeE, lower);
 
+    // Return the address at the start of the allocation
     return allocatedSpot;
 }
 
@@ -360,7 +391,8 @@ void bprint(Balloc pool)
     void *poolAddr = ballocPool->pool;
 
     // Outputting Pool Address into stdout
-    fprintf(stdout, "The base address of the memory pool: %p\n", poolAddr);
+    fprintf(stdout, "Memory Allocator Pool: %p\n", poolAddr);
+    fprintf(stdout, "--------------------------\n");
 
     // 2. Management Data
     // Grabbing data to be output
@@ -373,12 +405,18 @@ void bprint(Balloc pool)
     fprintf(stdout, "Upper Bounds (2^N): %d\n", upper);
     fprintf(stdout, "Range (Lower-Upper): %d\n", range);
 
+    // Whitespace
+    fprintf(stdout, "--------------------------\n");
+
     // 3. The FreeList
     // Grab the freelist
     FreeList *list = ballocPool->freeList;
 
     // Outputting the freelist using the method for it
     freelistprint(list, lower, upper);
+
+    // Whitespace
+    fprintf(stdout, "--------------------------\n");
 
     return;
 }

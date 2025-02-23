@@ -22,21 +22,60 @@
 int main()
 {
 
-    // Balloc pool1 = bcreate(32, 5, 5);
-    // Balloc pool2 = bcreate(64, 5, 5);
-    Balloc pool3 = bcreate(32, 4, 5);
+    Balloc pool1 = bcreate(32, 4, 5);
+    Balloc pool2 = bcreate(256, 5, 5);
+    // Balloc pool3 = bcreate(32, 4, 5);
 
-    // bprint(pool1);
+    // Should create 2^5 = 32 (8 Blocks)
+    // Balloc pool5 = bcreate(256, 3, 5);
 
-    // printf("\n");
-
+    // Before allocation
+    bprint(pool1);
     // bprint(pool2);
 
-    // printf("\n");
+    // bprint(pool3);
+    // bprint(pool4);
+    // bprint(pool5);
 
-    bprint(pool3);
+    balloc(pool1, 8);
+    // balloc(pool1, 16);
+    // balloc(pool1, 32);
+    // balloc(pool1, 32);
 
-    // printf("Location of pool1 %p\n", pool1);
+    // fprintf(stdout, "Location of free mem: %p\n", balloc(pool1, 32));
+    // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
+    // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
+    // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
+    // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
+    // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
+
+    // After allocation
+    bprint(pool1);
+    // bprint(pool2);
+
+    bdelete(pool1);
+    bdelete(pool2);
+    // bdelete(pool3);
+    // bdelete(pool4);
+    // bdelete(pool5);
+
+    // Presumably the same location as pool3 (Unsure if that should be the case)
+    // Balloc pool4 = bcreate(32, 4, 5);
+
+    // Wow, it is the same address...
+    // bprint(pool4);
+
+    // UTILS TESTS
+
+    // fprintf(stdout, "Size of 2 as an exponent (Expecting 1): Actual %d\n", size2e(2));
+
+    // size_t blocksize = e2size(5);
+    // size_t blocks = divup(32, blocksize);
+    // size_t buddies = divup(blocks, 2);
+
+    // fprintf(stdout, "Number of buddies: %ld\n", buddies);
+
+    // fprintf(stdout, "64 bits to bytes is... (Expecting 8): Actual %ld\n", bits2bytes(64));
 
     // Running bcreate tests
 
