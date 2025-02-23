@@ -6,8 +6,8 @@
 // Used for bitshifting to get values
 static const int bitShiftingExponentiation = 1;
 
-// Number to shift by to get bits ==> bytes
-static const int btbBitShiftingFactor = 3;
+// Number of bits in a byte
+static const int bitsInAByte = 8;
 
 // Calls mmap which with a provided size, will map the address space
 // of the given range, effectively
@@ -41,7 +41,9 @@ void mmfree(void *p, size_t size)
     // Call to unmap the memory in the address space with a provided size
     // Note: also need to make sure the unmapping was successful, if this call
     // returns 0, then that means the unmapping failed.
-    if (munmap(p, size) == -1)
+    int status = munmap(p, size);
+
+    if (status == -1)
     {
 
         // Output error message
@@ -95,7 +97,12 @@ size_t divup(size_t n, size_t d)
 
     // Bitshifting logic to calculate the division of n given d
     // * Unsure if correct
-    return n >> size2e(d);
+    // return n >> size2e(d);
+
+    // Revised version
+    // The numerator is being divided but with a slight offset to
+    // account for a remainder, acting like rounding up
+    return (n + d - 1) / d;
 }
 
 // Converts the provided number of bits into the respective amount of bytes
@@ -108,7 +115,7 @@ size_t bits2bytes(size_t bits)
     // provided number of bits per how many are in a byte (8). The reason
     // why you take the ceiling is because if you were to provide something
     // bits % 8 != 0 then that means you have to have an additional byte ontop
-    return bits >> btbBitShiftingFactor;
+    return (bits + 7) / bitsInAByte;
 }
 
 // Sets the bit at a provided address via void pointer
