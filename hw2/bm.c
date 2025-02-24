@@ -36,7 +36,7 @@ static void ok(BM b, size_t i)
 
 // Creates a BitMap that can store all sorts of bits
 // bits = the size the BitMap should be
-// Returns: BM,
+// Returns: BM, a regular bitmap
 extern BM bmcreate(size_t bits)
 {
   size_t bytes = bits2bytes(bits);
@@ -94,6 +94,7 @@ extern int bmtst(BM b, size_t i)
 // }
 
 // Prints out the bitmap in binary as opposed to hexadecimal
+// and is arguably more readable and meaningful
 extern void bmprt(BM b)
 {
   // Converting to a char pointer
