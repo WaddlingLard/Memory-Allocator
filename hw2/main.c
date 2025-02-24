@@ -22,7 +22,7 @@
 int main()
 {
 
-    Balloc pool1 = bcreate(32, 4, 5);
+    Balloc pool1 = bcreate(64, 3, 5);
     Balloc pool2 = bcreate(256, 5, 5);
     // Balloc pool3 = bcreate(32, 4, 5);
 
@@ -30,6 +30,7 @@ int main()
     // Balloc pool5 = bcreate(256, 3, 5);
 
     // Before allocation
+    fprintf(stdout, "Before allocation!\n");
     bprint(pool1);
     // bprint(pool2);
 
@@ -37,21 +38,33 @@ int main()
     // bprint(pool4);
     // bprint(pool5);
 
-    balloc(pool1, 8);
+    void *allocation1 = balloc(pool1, 16);
+    void *allocation2 = balloc(pool1, 8);
+
     // balloc(pool1, 16);
     // balloc(pool1, 32);
     // balloc(pool1, 32);
 
-    // fprintf(stdout, "Location of free mem: %p\n", balloc(pool1, 32));
+    // fprintf(stdout, "Location of free mem: %p\n", allocation2);
     // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
     // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
     // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
     // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
     // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
+    // fprintf(stdout, "Size of allocation (Expecting 8): %d\n", (int)bsize(pool1, allocation1));
+    // fprintf(stdout, "Size of allocation (Expecting 4): %d\n", (int)bsize(pool1, allocation2));
 
-    // After allocation
+    // After allocation & before freeing
+    fprintf(stdout, "After allocation and before freeing!\n");
     bprint(pool1);
     // bprint(pool2);
+
+    bfree(pool1, allocation1);
+    // bfree(pool1, allocation2);
+
+    // After freeing
+    fprintf(stdout, "After freeing!\n");
+    bprint(pool1);
 
     bdelete(pool1);
     bdelete(pool2);
