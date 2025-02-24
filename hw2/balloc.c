@@ -163,7 +163,9 @@ void bdelete(Balloc pool)
     // Grabbing lower/upper bounds and the size
     const int lower = ballocPool->managementData[0];
     const int upper = ballocPool->managementData[1];
-    const int size = ballocPool->size;
+
+    // * Not needed
+    // const int size = ballocPool->size;
 
     // Unmapping the freelist
     freelistdelete(list, lower, upper);
@@ -300,6 +302,7 @@ void bfree(Balloc pool, void *mem)
 
     // Freeing the block
     // * MAKE SURE TO VERIFY IT IS ALLOCATED ALREADY
+    // ^ Might not need to check that
     // * What if cannot free?
     freelistfree(list, poolAddr, mem, size2e(sizeOfBlock), lower);
 
@@ -310,6 +313,7 @@ void bfree(Balloc pool, void *mem)
 // Grabs the size of the memory block
 // pool = A Balloc struct that contains the memory map
 // * mem = A void pointer that is pointing at the block of memory to grab its size
+// Returns: int, the size of the block
 unsigned int bsize(Balloc pool, void *mem)
 {
 
@@ -349,11 +353,11 @@ unsigned int bsize(Balloc pool, void *mem)
     const int upper = ballocPool->managementData[1];
 
     // Get the size of the block from the freelist
-    // * What if cannot get size?
     int blockSize = freelistsize(list, poolAddr, mem, lower, upper);
 
     // Returning size of the block!
-    return blockSize;
+    // Have to convert exponent value to block size
+    return e2size(blockSize);
 }
 
 // A tool to output a text representation of the memory pool to stdout
@@ -416,7 +420,7 @@ void bprint(Balloc pool)
     freelistprint(list, lower, upper);
 
     // Whitespace
-    fprintf(stdout, "--------------------------\n");
+    fprintf(stdout, "--------------------------\n\n");
 
     return;
 }
