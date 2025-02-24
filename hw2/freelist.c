@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 
 #include "freelist.h"
 #include "utils.h"
@@ -74,10 +75,6 @@ void buildlist(Buddy *rootNode, size_t numberOfBlocks, int blockExponent, void *
 
         // Getting new address using pointer arithmetic
         void *newAddress = (void *)((char *)currentAddress + e2size(blockExponent));
-
-        // Getting new bit map address
-        // i represents the number of buddies (kind of)
-        // void *newBBMAddress = (void *)((char *)baseBBMAddress + i);
 
         // Store the new current address
         currentAddress = newAddress;
@@ -438,7 +435,8 @@ Buddy *splitblock(Buddy *currentBuddy, Buddy **buddies, BBM bitmap, void *base, 
 
 // Makes sure the exponent that is being searched is not greater than upper
 // because that implies there are no valid free blocks that will satify the allocation
-//
+// exponent = Current exponent
+// upper = Upper exponent bound
 void checkexponent(int exponent, int upper)
 {
     if (exponent > upper)
@@ -515,9 +513,6 @@ void *freelistalloc(FreeList f, void *base, int e, int l)
         // Grabbing bitmap from the respective level
         BBM bitmap = currentBuddy->bitmap;
 
-        // Casting the bitmap for indexing later
-        char *bytes = (char *)bitmap;
-
         // Run a allocation with checking the case if the list is single noded or not
         startOfFreeMem = allocation(currentBuddy, buddies, bitmap, base, exponent, issingle(currentBuddy));
     }
@@ -573,6 +568,217 @@ void *freelistalloc(FreeList f, void *base, int e, int l)
     return startOfFreeMem;
 }
 
+// Helper method that gives you an idea what buddy of the two you are looking a
+// This is achieved using modular division as the block to the 'right' will always
+// return a value that is non zero when you apply % sizeofLargerBlock as opposed
+// to the block on the left
+// * currentBuddy =
+// * base = The base address of the memory pool
+// sizeOfLargerBlock = The size of a block that is a level highert
+// Returns: int, 1 for left, 0 for right
+int leftorrightbuddy(Buddy *currentBuddy, void *base, int sizeOfLargerBlock)
+{
+    // Getting location of the currentBuddy
+    void *currentBuddyLocation = currentBuddy->currentLocation;
+
+    // Calculating the offset from the base by using a pointer diff
+    ptrdiff_t offset = (char *)base - (char *)currentBuddyLocation;
+
+    // Is it left or right
+    if (offset % sizeOfLargerBlock == 0)
+    {
+        // Left block return value
+        return 1;
+    }
+    else
+    {
+        // Right block return value
+        return 0;
+    }
+}
+
+// Loops through a singly linked list to find an address
+// * headOfList = A buddy that starts at the front of the list
+// * address = Address that is being looked for
+// Returns: int, 1 for found, 0 for no
+int lookforaddress(Buddy *headOfList, void *address)
+{
+
+    // Current buddy holder
+    Buddy *currentBuddy = headOfList;
+
+    // Loops through all buddies in the list
+    while (currentBuddy != NULL)
+    {
+        // Is the address in the list?
+        if (currentBuddy->currentLocation == address)
+        {
+            // Found it.
+            return 1;
+        }
+        // Increment currentBuddy pointer
+        currentBuddy = currentBuddy->nextBuddy;
+    }
+
+    // Did not find it :(
+    return 0;
+}
+
+void buildup()
+{
+}
+
+// void isbuddytillallocated()
+// {
+// }
+
+// Checks if the list is empty
+// * currentBuddy = A pointer to the buddy that's list is being checked
+// Returns: int, 1 for is empty and 0 for no
+int isemptylist(Buddy *currentBuddy)
+{
+    // Is list empty?
+    if (currentBuddy->currentLocation == NULL)
+    {
+        // Return it is empty value
+        return 1;
+    }
+    else
+    {
+        // List is not empty
+
+        // Not empty return value
+        return 0;
+    }
+}
+
+// Helper method that does the dirty work for unallocation
+// ** buddies = Array of pointers to the buddies
+// bitmap = A buddy bitmap
+// * base = The base of the memory address in the pool
+// * mem = The offset of where the allocation occured
+// exponent = Exponent of the block that needs to be unallocated
+// lower = Lower Exponent Bounds
+// Returns: Buddy *, a pointer to the resurrected buddy!
+Buddy *unallocation(Buddy **buddies, BBM bitmap, void *base, void *mem, int exponent, int lower, int emptyListFlag)
+{
+
+    // Get the head of the list for the buddy level
+    Buddy *currentBuddyLevel = buddies[exponent];
+
+    // Saving buddy location
+    Buddy *freedBuddy;
+
+    // Add back into the freelist, but must account if the list is empty or not
+    if (emptyListFlag)
+    {
+        // List is empty
+        // Simple, just modify the front of the list
+
+        // Setting the address to the location of where the allocation occured
+        currentBuddyLevel->currentLocation = mem;
+
+        // Saving the location into freedBuddy
+        freedBuddy = currentBuddyLevel;
+    }
+    else
+    {
+        // List is not empty
+        // Not as simple, must figure out where to appropriately put in the list
+
+        // Rebuild a new node
+        Buddy *resurrectedBuddy = mmalloc(sizeof(Buddy));
+
+        // Set the bitmap on the new node with the currentBuddyLevel's bitmap (they are on the same level)
+        resurrectedBuddy->bitmap = currentBuddyLevel->bitmap;
+
+        // Setting the address to the location of where the allocation occured
+        resurrectedBuddy->currentLocation = mem;
+
+        // Find where to insert in list
+        // Base Case: Is it at the start?
+        if (mem < currentBuddyLevel->currentLocation)
+        {
+            // At the start of the list
+            // Set the new buddy's next value to the currentBuddyLevel (Head of list)
+            resurrectedBuddy->nextBuddy = currentBuddyLevel;
+
+            // Set new head of list to the resurrectedBuddy
+            buddies[exponent] = resurrectedBuddy;
+
+            // Saving the location into freedBuddy
+            freedBuddy = currentBuddyLevel;
+        }
+        else
+        {
+            // Somewhere not at the start
+
+            // Aliasing for the current buddy
+            Buddy *currentBuddy = currentBuddyLevel;
+
+            // Grabbing the next value of the list
+            Buddy *nextBuddy = currentBuddy->nextBuddy;
+
+            // If this is false that means we are at the end of the list
+            while (nextBuddy != NULL)
+            {
+
+                // Grabbing freed buddy location
+                void *ressurectedBuddyLocation = resurrectedBuddy->currentLocation;
+
+                // Grabbing next buddy location
+                void *nextBuddyLocation = nextBuddy->currentLocation;
+
+                // Comparing to see if nextBuddy is ahead of ressurectedBuddy
+                if (ressurectedBuddyLocation < nextBuddyLocation)
+                {
+                    // Behind, we have found the spot to nestle it in
+                    // Set the resurrectedBuddy's next to be the nextBuddy
+                    // Ex: [currentBuddy]-->[resurrectedBuddy]-->[nextBuddy]-->....
+                    resurrectedBuddy->nextBuddy = nextBuddy;
+
+                    // Set the currentBuddy's next to be the resurrectedBuddy
+                    currentBuddy->nextBuddy = resurrectedBuddy;
+
+                    // Saving the location into freedBuddy
+                    freedBuddy = resurrectedBuddy;
+
+                    // No more of this as the list is now properly aligned
+                    break;
+                }
+                else
+                {
+                    // Have not found spot yet, just continue down the list
+                    // Iterate both buddies
+                    currentBuddy = nextBuddy;
+                    nextBuddy = currentBuddy->nextBuddy;
+                }
+            }
+
+            // Checking if we reached the end of the list
+            if (nextBuddy == NULL)
+            {
+                // That means just add resurrectedBuddy to the end of the currentBuddy
+                // which in principle should be the last node
+                // Ex: ...->[currentBuddy]-->[resurrectedBuddy]-->
+                currentBuddy->nextBuddy = resurrectedBuddy;
+
+                // Setting the resurrectedBuddy's next buddy to be NULL because its at the tail
+                resurrectedBuddy->nextBuddy = NULL;
+
+                // Saving the location into freedBuddy
+                freedBuddy = resurrectedBuddy;
+            }
+        }
+    }
+
+    // * Possibly change bitmap?
+    // MAYBE
+
+    // Returning the freed buddy
+    return freedBuddy;
+}
+
 // Frees a block of memory in the freelist
 // f = A freelist
 // * base = The base addess of the pool
@@ -582,11 +788,139 @@ void *freelistalloc(FreeList f, void *base, int e, int l)
 void freelistfree(FreeList f, void *base, void *mem, int e, int l)
 {
 
+    // Aliasing
+    int exponent = e, lower = l;
+
+    // Validating the freelist
+    if (!f)
+    {
+        // Outputting error message
+        fprintf(stderr, "Freelist is not valid!");
+        exit(1);
+    }
+
+    // Grab the list representation of the freelist
+    List *list = (List *)f;
+
+    // Validating the base pool and mem offset address
+    if (!base || !mem)
+    {
+        // Outputting error messsage
+        fprintf(stderr, "Base pool or mem offset address is not valid!");
+        exit(1);
+    }
+
+    // Grab the lists (array of pointers)
+    Buddy **buddies = list->buddies;
+
+    // Get the head of the list for the buddy level
+    Buddy *currentBuddyLevel = buddies[exponent];
+
+    // Get the bitmap at the current level
+    BBM currentBitmap = currentBuddyLevel->bitmap;
+
+    // When you are freeing something, you practially have the
+    // Buddy, just not in an explicit struct.
+    // When you free a node you have to check its buddy since
+    // a buddy contains two nodes...
+    // That is because a bitmap represents two nodes at one bit location
+
+    // Need to check if it should be built up, if not just return from the dead
+    // This will require some understanding of how to restructure the list
+
+    // First bring back the buddy via unallocation
+    Buddy *resurrectedBuddy = unallocation(buddies, currentBitmap, base, mem, exponent, lower, isemptylist(currentBuddyLevel));
+
+    // Got to find out the buddy I just brought back
+    int leftorright = leftorrightbuddy(base, resurrectedBuddy, e2size(exponent + 1));
+
+    // Result from the lookfor()
+    int lookfor;
+
+    // Now we know if the freedbuddy is the left or right of the pair
+    // Check the other one
+    if (leftorright)
+    {
+        // Check the right one
+        // Calculate the size to look for
+        void *rightBuddy = (char *)resurrectedBuddy->currentLocation + e2size(exponent);
+
+        // Look to see if the address is in the free blocks
+        lookfor = lookforaddress(currentBuddyLevel, rightBuddy);
+    }
+    else
+    {
+        // Check the left one
+        void *leftBuddy = (char *)resurrectedBuddy->currentLocation - e2size(exponent);
+
+        // Look to see if the address is in the free blocks
+        lookfor = lookforaddress(currentBuddyLevel, leftBuddy);
+    }
+
+    if (lookfor)
+    {
+        // Possibly could use some recursion...
+        // RECURSION TIME
+        buildup();
+    }
+
     // Block has been freed!
     return;
 }
 
-// Grabs the size of a block in the freelist
+// Recursively goes down bitmaps to find the respective exponent
+// ** buddies = An array of buddies via pointers
+// * base = The base address of the pool
+// * mem = The offset address of where the bit is
+// upper = Upper exponent bound
+// lower = Lower exponent bound
+// currentExponent = The current exponent level in the buddy list being checked
+size_t exponentsearcher(Buddy **buddies, void *base, void *mem, int upper, int lower, int currentExponent)
+{
+
+    // BASE CASE: Have we reached the end of the buddies?
+    if (currentExponent < lower)
+    {
+        // This is the end of the line, son
+        // That means the lowest level of the buddies is where the allocation occured
+
+        // The lowest exponent it is then!
+        return currentExponent + 1;
+    }
+
+    // Need to grab a bit map
+    // ? Maybe start at the top?
+    Buddy *currentBuddy = buddies[currentExponent];
+
+    // Grab bitmap at current level
+    BBM currentBitmap = currentBuddy->bitmap;
+
+    // Remember, if we are looking for allocated nodes that implys the bitmap
+    // will have that location marked with a '1'
+
+    // Test to see if at the currentExponents level the bit is considered allocated
+    if (bbmtst(currentBitmap, base, mem, currentExponent))
+    {
+        // Location is marked allocated
+        // Get new level to search
+
+        // This means we need to go to a lower level
+        // WOOP WOOP THIS IS RECURSION
+        return exponentsearcher(buddies, base, mem, upper, lower, currentExponent - 1);
+    }
+    else
+    {
+        // Location is marked free
+        // This means the level we are looking at is not where the alloction occured
+        // and that implys any levels below are also not where the allocation is
+
+        // Must be on the level above!
+        return currentExponent + 1;
+    }
+}
+
+// Grabs the size of an allocated block in the freelist
+// (It is presumed you can only get the size of allocated blocks)
 // f = A freelist
 // * base = The base address of the pool
 // * mem = Address of the location where the block of memory is
@@ -596,7 +930,56 @@ void freelistfree(FreeList f, void *base, void *mem, int e, int l)
 int freelistsize(FreeList f, void *base, void *mem, int l, int u)
 {
 
-    return 0;
+    // Aliasing
+    const int lower = l, upper = u;
+
+    // Used to track current level of exponent on buddies
+    int currentExponent = upper;
+
+    // Validating the freelist
+    if (!f)
+    {
+        // Outputting error message
+        fprintf(stderr, "Freelist is not valid!");
+        exit(1);
+    }
+
+    // Grab the list representation of the freelist
+    List *list = (List *)f;
+
+    // Validating the base pool and mem offset address
+    if (!base || !mem)
+    {
+        // Outputting error messsage
+        fprintf(stderr, "Base pool or mem offset address is not valid!");
+        exit(1);
+    }
+
+    // Grab the list of buddies (array of pointers)
+    Buddy **buddies = list->buddies;
+
+    // Remember, if we are looking for allocated nodes that implys the bitmap
+    // will have that location marked with a '1'
+    // Example:
+    // Freelist[3] = 0000001
+    // Freelist[4] = 0000001
+    // Freelist[5] = 0000001
+    // Since all buddies in the first position are marked allocated that implies
+    // the allocation occured in the Freelist[3] layer as the mem offset accounts for it
+    // due to bitmaps work on offsets its nice because you dont have to worry about
+    // a stray allocated block caught in this algorithm.
+    //
+    // For example, If you had a double allocation occur in Freelist[5] on the same
+    // buddy bitmap value, it doesn't matter because that second allocation would reflect
+    // on the second bitmap value in Freelist[4] which is marked as free. That implies
+    // the size you are looking for must be on Freelist[5] because that is the only one
+    // where the bitmap is marked 1 when you get the off set of the base and mem
+
+    // Maybe use recursion and save the exponent
+    int exponent = exponentsearcher(buddies, base, mem, upper, lower, currentExponent);
+
+    // Returning the exponent!
+    return exponent;
 }
 
 // Outputting tool of the freelist, useful for debugging
