@@ -6,10 +6,11 @@
 
 ## Overview
 
-An implementation of the buddy system in c using a balloc module
+An implementation of the buddy system in c using a balloc module.
 
 ## Reflection
 
+Wow. I'm happy its complete. It's all I ever wanted from this homework assignment.
 
 ## Compiling and Using
 
@@ -28,10 +29,13 @@ OR... if you want to run immediately after building use
 
 Just make sure the file structure is not disturbed and all should be good!
 
-Note: Main will contain all the tests. They are mostly just output statements but there will be enough information to verify the allocator is working. There is also a little deq test at the bottom to show they are linking up and working properly
+Note: Main will contain all the tests. They are mostly just output statements but there will be enough information to verify the allocator is working. There is also a little deq test at the bottom to show they are linking up and working properly using the strcmp() method.
 
 ## Results 
 
+Balloc looks really solid. I'm happy with how it turned out and it does a great job. It probably is not even close to being the most optimal solution, but I'm so happy I figured it out and got all of the methods working. I would give a confidence rating of 90-95% that it works but more testing would always be nice to confirm anyone's suspicions.
+
+The deq looks promising, I haven't been able to implement anything that crazy so you'd definitely need to take a better look at it. However, it does look ok for the time being so with at least 70% confidence it appears to work! I know that isn't the most convincing argument but it does the most basic iterations of the operations of put, get, ith, and rem so that is a start.
 
 ## Sources used
 
