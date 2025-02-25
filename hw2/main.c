@@ -18,101 +18,151 @@
 #include "deq.h"
 // #include "wrapper.c"
 
+void testpool1()
+{
+    // pool1 Tests
+
+    // Basic pool
+    fprintf(stdout, "\nRunning tests for pool 1!\n");
+    Balloc pool1 = bcreate(64, 3, 5);
+
+    // Outputting start of pool1 (no operations)
+    bprint(pool1);
+
+    // Test 1: Allocation of 16 bytes
+    fprintf(stdout, "\nAllocating 16 bytes!\n");
+    void *allocation1 = balloc(pool1, 16);
+
+    // What size is the allocation?
+    // Test 1.5: Allocation 1 size
+    fprintf(stdout, "The size of the allocation is: %d\n", bsize(pool1, allocation1));
+
+    // Allocation should be reflected in the output
+    bprint(pool1);
+
+    // Test 2: Allocation of 8 bytes
+    fprintf(stdout, "\nNow allocating 8 bytes!\n");
+    void *allocation2 = balloc(pool1, 8);
+
+    // What size is the allocation?
+    // Test 2.5: Allocation 2 size
+    fprintf(stdout, "The size of the allocation is: %d\n", bsize(pool1, allocation2));
+
+    // Allocation should be reflected in the output
+    bprint(pool1);
+
+    // Now going to initiate frees
+    // Test 3: Freeing first allocation
+    fprintf(stdout, "\nNow freeing first allocation!\n");
+    bfree(pool1, allocation1);
+
+    // Freed block should be reflected in the output statement
+    bprint(pool1);
+
+    // Test 4: Freeing second allocation
+    fprintf(stdout, "\nNow freeing second allcation\n");
+    bfree(pool1, allocation2);
+
+    // Freed block should have returned to constructed state
+    bprint(pool1);
+
+    // Deleting pool
+    // Test 5: Delete pool
+    bdelete(pool1);
+
+    fprintf(stdout, "\nPool1 tests complete!\n");
+
+    // Tests complete
+    return;
+}
+
+void testpool2()
+{
+    // pool2 tests
+
+    // Bigger pool
+    fprintf(stdout, "\nRunning tests for pool2!\n");
+    Balloc pool2 = bcreate(4096, 8, 11);
+
+    // Outputting start of pool2 (no operations)
+    bprint(pool2);
+
+    // Test 6: Multiple Allocations
+    fprintf(stdout, "\nAllocation of 1024, 512, and 256 in that order!\n");
+    void *allocation1 = balloc(pool2, 1024);
+    void *allocation2 = balloc(pool2, 512);
+    void *allocation3 = balloc(pool2, 256);
+
+    // Output should reflect those allocations
+    bprint(pool2);
+
+    // Test 7: Freeing the allocations in random order
+    fprintf(stdout, "\nFreeing all allocations in jumbled order!\n");
+    bfree(pool2, allocation3);
+    bfree(pool2, allocation1);
+    bfree(pool2, allocation2);
+
+    // Output should return to constructed state
+    bprint(pool2);
+
+    // Tests complete
+    // Test 8: Delete list
+    bdelete(pool2);
+
+    fprintf(stdout, "\nPool2 tests complete!\n");
+
+    return;
+}
+
+void testpool3()
+{
+    // pool3 tests
+
+    // Small pool
+    fprintf(stdout, "\nRunning tests for pool3!\n");
+    Balloc pool3 = bcreate(32, 1, 4);
+
+    // Outputting start of pool3 (no operations)
+    bprint(pool3);
+
+    // Test 9: Multiple smallest size allocations
+    fprintf(stdout, "\nAllocations of size 2, 4 times!\n");
+    void *allocation1 = balloc(pool3, 2);
+    void *allocation2 = balloc(pool3, 2);
+    void *allocation3 = balloc(pool3, 2);
+    void *allocation4 = balloc(pool3, 2);
+
+    // Output should reflect those allocations
+    bprint(pool3);
+
+    // Test 10: Free allocations in jumbled order
+    fprintf(stdout, "\nFreeing all allocations in reversed order!\n");
+    bfree(pool3, allocation4);
+    bfree(pool3, allocation3);
+    bfree(pool3, allocation2);
+    bfree(pool3, allocation1);
+
+    // Output should return to constructed state
+    bprint(pool3);
+
+    // Tests complete
+    // Test 11: Delete list
+    bdelete(pool3);
+
+    fprintf(stdout, "\nPool3 tests complete!\n");
+
+    // Tests complete
+    return;
+}
+
 int main()
 {
 
-    fprintf(stdout, "Running some balloc tests\n");
+    fprintf(stdout, "\nRunning some balloc tests\n");
 
-    // Basic pool
-    Balloc pool1 = bcreate(64, 3, 5);
-
-    // Bigger pool
-    Balloc pool2 = bcreate(1024, 6, 8);
-
-    // Small pool
-    Balloc pool3 = bcreate(16, 0, 2);
-
-    // Should create 2^5 = 32 (8 Blocks)
-    // Balloc pool5 = bcreate(256, 3, 5);
-
-    // Before allocation
-    // fprintf(stdout, "Before allocation!\n");
-    // bprint(pool1);
-    // bprint(pool2);
-
-    // bprint(pool3);
-    // bprint(pool4);
-    // bprint(pool5);
-
-    // void *allocation1 = balloc(pool1, 16);
-    // void *allocation2 = balloc(pool1, 8);
-
-    // balloc(pool1, 16);
-    // balloc(pool1, 32);
-    // balloc(pool1, 32);
-
-    // fprintf(stdout, "Location of free mem: %p\n", allocation2);
-    // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
-    // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
-    // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
-    // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
-    // fprintf(stdout, "Location of free mem: %p\n", balloc(pool2, 32));
-    // fprintf(stdout, "Size of allocation (Expecting 8): %d\n", (int)bsize(pool1, allocation1));
-    // fprintf(stdout, "Size of allocation (Expecting 4): %d\n", (int)bsize(pool1, allocation2));
-
-    // After allocation & before freeing
-    // fprintf(stdout, "After allocation and before freeing!\n");
-    // bprint(pool1);
-    // bprint(pool2);
-
-    // fprintf(stdout, "Freeing!\n");
-    // bfree(pool1, allocation1);
-    // bfree(pool1, allocation2);
-
-    // After freeing
-    // fprintf(stdout, "After freeing!\n");
-    // bprint(pool1);
-
-    // bdelete(pool1);
-    // bdelete(pool2);
-    // bdelete(pool3);
-    // bdelete(pool4);
-    // bdelete(pool5);
-
-    // Presumably the same location as pool3 (Unsure if that should be the case)
-    // Balloc pool4 = bcreate(32, 4, 5);
-
-    // Wow, it is the same address...
-    // bprint(pool4);
-
-    // UTILS TESTS
-
-    // fprintf(stdout, "Size of 2 as an exponent (Expecting 1): Actual %d\n", size2e(2));
-
-    // size_t blocksize = e2size(5);
-    // size_t blocks = divup(32, blocksize);
-    // size_t buddies = divup(blocks, 2);
-
-    // fprintf(stdout, "Number of buddies: %ld\n", buddies);
-
-    // fprintf(stdout, "64 bits to bytes is... (Expecting 8): Actual %ld\n", bits2bytes(64));
-
-    // Running bcreate tests
-
-    // Running balloc tests
-
-    // Running bfree tests
-
-    // Running bdelete tests
-    bdelete(pool1);
-    bdelete(pool2);
-    bdelete(pool3);
-
-    // Running bprint tests
-
-    // Commented out tests (should intentionally fail)
-
-    // Random Tests
+    testpool1();
+    testpool2();
+    testpool3();
 
     // RUNNING DEQ TEST PORTION
     fprintf(stdout, "Running a simple deq test\n");
