@@ -39,10 +39,10 @@ struct freeListList
 } typedef List;
 
 // Builds a list of free blocks from the root node
-// rootNode = The start of the singly linked list
-// numberOfBlocks = How many blocks should be appended to the list
-// blockSize = The size of the block to create
-// * base = The base address of the memory pool
+// @param rootNode = The start of the singly linked list
+// @param numberOfBlocks = How many blocks should be appended to the list
+// @param blockSize = The size of the block to create
+// @param *base = The base address of the memory pool
 void buildlist(Buddy *rootNode, size_t numberOfBlocks, int blockExponent, void *base, BBM bitmap)
 {
 
@@ -100,11 +100,11 @@ void buildlist(Buddy *rootNode, size_t numberOfBlocks, int blockExponent, void *
 }
 
 // Creates a freelist struct and returns the void *
-// size = The size of the memory pool to work with
-// l = Lower exponent bound
-// u = Upper exponent bound
-// * base = The address of the memory pool base
-// Returns: FreeList, a struct containing the information on what blocks are free
+// @param size = The size of the memory pool to work with
+// @param l = Lower exponent bound
+// @param u = Upper exponent bound
+// @param *base = The address of the memory pool base
+// @return Returns: FreeList, a struct containing the information on what blocks are free
 FreeList freelistcreate(size_t size, int l, int u, void *base)
 {
 
@@ -215,9 +215,9 @@ FreeList freelistcreate(size_t size, int l, int u, void *base)
 }
 
 // Deletes a freelist
-// f = A freelist
-// l = Lower exponent bound
-// u = Upper exponent bound
+// @param f = A freelist
+// @param l = Lower exponent bound
+// @param u = Upper exponent bound
 void freelistdelete(FreeList f, int l, int u)
 {
 
@@ -281,13 +281,133 @@ void freelistdelete(FreeList f, int l, int u)
     return;
 }
 
+// Checks if there is another node in the list
+// @param *currentBuddy = The buddy being checked
+// @return Returns: int, 1 for single, 0 for no
+int issingle(Buddy *currentBuddy)
+{
+    // Is there a friend?
+    if (currentBuddy->nextBuddy != NULL)
+    {
+        // Yay, friend
+        return 0;
+    }
+    else
+    {
+        // No friend
+        return 1;
+    }
+}
+
+// Acts very similar to allocaion but is purely used by buildup() to remove a pair of nodes
+// @param
+// @param
+// @param
+// @param
+// @param
+// @return
+void removenodepair(Buddy *currentBuddy, Buddy **buddies, void *base, int exponent, int atHead)
+{
+    // This method is called when there is at least two nodes
+
+    // Is the pair at the head
+    if (atHead)
+    {
+        // Deal with removing two nodes at the start of the list
+
+        // Get the next buddy so it will be deleted as well
+        Buddy *nextBuddy = currentBuddy->nextBuddy;
+
+        // Free the block
+        mmfree(currentBuddy, sizeof(Buddy));
+
+        // Save that block into the head of the list
+        buddies[exponent] = nextBuddy;
+
+        // Will the nextBuddy be the last node in the list
+        if (issingle(nextBuddy))
+        {
+            // Set that buddy to NULL
+            nextBuddy->currentLocation = NULL;
+        }
+        else
+        {
+            // Can free next buddy as well, but need to grab the nextBuddy's nextBuddy (a little confusing I know)
+            // Ex: [currentBuddy (TO BE FREED)]-->[nextBuddy (TO BE FREED)]-->[nextBuddy's nextBuddy]
+            Buddy *nextnextBuddy = nextBuddy->nextBuddy;
+
+            // Free the block
+            mmfree(nextBuddy, sizeof(Buddy));
+
+            // Save that block into the head of the list
+            buddies[exponent] = nextnextBuddy;
+        }
+    }
+    else
+    {
+        // Find the node before the pair to remove
+        Buddy *startOfList = buddies[exponent];
+
+        // Loop through the whole list of buddies
+        while (1)
+        {
+            // Get the next buddy to check if the pair is there
+            Buddy *nextBuddy = startOfList->nextBuddy;
+
+            // Does the next node == the node pair we want to delete?
+            if (nextBuddy->currentLocation == currentBuddy->currentLocation)
+            {
+                // It is what we want to delete
+                // Get the nextnextBuddy to delete
+                Buddy *nextnextBuddy = nextBuddy;
+
+                // Is the right buddy have something after
+                if (issingle(nextnextBuddy))
+                {
+                    // There no node after
+
+                    // Adjust pointers
+                    startOfList->nextBuddy = NULL;
+
+                    // Free left and right nodes
+                    mmfree(nextBuddy, sizeof(Buddy));
+                    mmfree(nextnextBuddy, sizeof(Buddy));
+                }
+                else
+                {
+                    // There is a node after
+
+                    // Adjust pointers
+                    startOfList->nextBuddy = nextnextBuddy->nextBuddy;
+
+                    // Free left and right nodes
+                    mmfree(nextBuddy, sizeof(Buddy));
+                    mmfree(nextnextBuddy, sizeof(Buddy));
+                }
+
+                // No more looping
+                break;
+            }
+            else
+            {
+                // Iterate the list
+                startOfList = nextBuddy;
+            }
+        }
+    }
+
+    // It is removed!
+    return;
+}
+
 // Helper method that does the dirty work for allocation
-// bitmap = A buddy bit map
-// * base = The base of the memory address in the pool
-// exponent = Exponent of the block size
-// singleNodeFlag = Flag to indicate if the list is a single node
-// ** buddies = Array of pointers to the buddies
-// Returns: void *, Where the allocated block starts
+// @param *currentBuddy = The current buddy in pointer form
+// @param **buddies = Array of pointers to the buddies
+// @param bitmap = A buddy bit map
+// @param *base = The base of the memory address in the pool
+// @param exponent = Exponent of the block size
+// @param singleNodeFlag = Flag to indicate if the list is a single node
+// @return Returns: void *, Where the allocated block starts
 void *allocation(Buddy *currentBuddy, Buddy **buddies, BBM bitmap, void *base, int exponent, int singleNodeFlag)
 {
 
@@ -331,33 +451,15 @@ void *allocation(Buddy *currentBuddy, Buddy **buddies, BBM bitmap, void *base, i
     return location;
 }
 
-// Checks if there is another node in the list
-// * currentBuddy = The buddy being checked
-// Returns: int, 1 for single, 0 for no
-int issingle(Buddy *currentBuddy)
-{
-    // Is there a friend?
-    if (currentBuddy->nextBuddy != NULL)
-    {
-        // Yay, friend
-        return 0;
-    }
-    else
-    {
-        // No friend
-        return 1;
-    }
-}
-
 // Splits a block recursively down to the requested exponent
-// * currentBuddy = The current buddy
-// ** buddies = An array of pointers to all of the buddies
-// bitmap = A buddy bitmap
-// * base = The base address of the memory pool
-// lower = Lower bound exponent
-// requestedExponent = Requested size allocation in exponent form
-// exponent = Current block size exponent
-// Returns: Buddy *, A pointer to the location of the currentBuddy (after all the splits and stuff)
+// @param *currentBuddy = The current buddy
+// @param **buddies = An array of pointers to all of the buddies
+// @param bitmap = A buddy bitmap
+// @param *base = The base address of the memory pool
+// @param lower = Lower bound exponent
+// @param requestedExponent = Requested size allocation in exponent form
+// @param exponent = Current block size exponent
+// @return Returns: Buddy *, A pointer to the location of the currentBuddy (after all the splits and stuff)
 Buddy *splitblock(Buddy *currentBuddy, Buddy **buddies, BBM bitmap, void *base, int lower, int requestedExponent, int exponent)
 {
 
@@ -435,8 +537,8 @@ Buddy *splitblock(Buddy *currentBuddy, Buddy **buddies, BBM bitmap, void *base, 
 
 // Makes sure the exponent that is being searched is not greater than upper
 // because that implies there are no valid free blocks that will satify the allocation
-// exponent = Current exponent
-// upper = Upper exponent bound
+// @param exponent = Current exponent
+// @param upper = Upper exponent bound
 void checkexponent(int exponent, int upper)
 {
     if (exponent > upper)
@@ -444,8 +546,7 @@ void checkexponent(int exponent, int upper)
         // Cannot go higher, there is not a block that will satisfy this allocation
 
         // Output error message
-        // ? Should it be an error message
-        fprintf(stdout, "Cannot allocate memory: No free block in system that is of adequate size!\n");
+        fprintf(stderr, "Cannot allocate memory: No free block in system that is of adequate size!\n");
         exit(1);
     }
     else
@@ -456,11 +557,11 @@ void checkexponent(int exponent, int upper)
 }
 
 // Allocates a block of memory from the freelist
-// f = A freelist
-// * base = The base address of the pool (I believe)
-// e = Requested exponent
-// l = Lower exponent bound
-// Returns: void *, an address of where the memory was allocated
+// @param f = A freelist
+// @param *base = The base address of the pool (I believe)
+// @param e = Requested exponent
+// @param l = Lower exponent bound
+// @return Returns: void *, an address of where the memory was allocated
 void *freelistalloc(FreeList f, void *base, int e, int l)
 {
 
@@ -572,10 +673,10 @@ void *freelistalloc(FreeList f, void *base, int e, int l)
 // This is achieved using modular division as the block to the 'right' will always
 // return a value that is non zero when you apply % sizeofLargerBlock as opposed
 // to the block on the left
-// * currentBuddy =
-// * base = The base address of the memory pool
-// sizeOfLargerBlock = The size of a block that is a level highert
-// Returns: int, 1 for left, 0 for right
+// @param *currentBuddy = The current buddy being checked
+// @param *base = The base address of the memory pool
+// @param sizeOfLargerBlock = The size of a block that is a level highert
+// @return Returns: int, 1 for left, 0 for right
 int leftorrightbuddy(Buddy *currentBuddy, void *base, int sizeOfLargerBlock)
 {
     // Getting location of the currentBuddy
@@ -598,9 +699,9 @@ int leftorrightbuddy(Buddy *currentBuddy, void *base, int sizeOfLargerBlock)
 }
 
 // Loops through a singly linked list to find an address
-// * headOfList = A buddy that starts at the front of the list
-// * address = Address that is being looked for
-// Returns: int, 1 for found, 0 for no
+// @param *headOfList = A buddy that starts at the front of the list
+// @param *address = Address that is being looked for
+// @return Returns: int, 1 for found, 0 for no
 int lookforaddress(Buddy *headOfList, void *address)
 {
 
@@ -624,17 +725,9 @@ int lookforaddress(Buddy *headOfList, void *address)
     return 0;
 }
 
-void buildup()
-{
-}
-
-// void isbuddytillallocated()
-// {
-// }
-
 // Checks if the list is empty
-// * currentBuddy = A pointer to the buddy that's list is being checked
-// Returns: int, 1 for is empty and 0 for no
+// @param *currentBuddy = A pointer to the buddy that's list is being checked
+// @return Returns: int, 1 for is empty and 0 for no
 int isemptylist(Buddy *currentBuddy)
 {
     // Is list empty?
@@ -653,16 +746,15 @@ int isemptylist(Buddy *currentBuddy)
 }
 
 // Helper method that does the dirty work for unallocation
-// ** buddies = Array of pointers to the buddies
-// bitmap = A buddy bitmap
-// * base = The base of the memory address in the pool
-// * mem = The offset of where the allocation occured
-// exponent = Exponent of the block that needs to be unallocated
-// lower = Lower Exponent Bounds
-// Returns: Buddy *, a pointer to the resurrected buddy!
+// @param ** buddies = Array of pointers to the buddies
+// @param bitmap = A buddy bitmap
+// @param *base = The base of the memory address in the pool
+// @param *mem = The offset of where the allocation occured
+// @param exponent = Exponent of the block that needs to be unallocated
+// @param lower = Lower Exponent Bounds
+// @return Returns: Buddy *, a pointer to the resurrected buddy!
 Buddy *unallocation(Buddy **buddies, BBM bitmap, void *base, void *mem, int exponent, int lower, int emptyListFlag)
 {
-
     // Get the head of the list for the buddy level
     Buddy *currentBuddyLevel = buddies[exponent];
 
@@ -707,7 +799,7 @@ Buddy *unallocation(Buddy **buddies, BBM bitmap, void *base, void *mem, int expo
             buddies[exponent] = resurrectedBuddy;
 
             // Saving the location into freedBuddy
-            freedBuddy = currentBuddyLevel;
+            freedBuddy = resurrectedBuddy;
         }
         else
         {
@@ -772,22 +864,135 @@ Buddy *unallocation(Buddy **buddies, BBM bitmap, void *base, void *mem, int expo
         }
     }
 
-    // * Possibly change bitmap?
-    // MAYBE
-
     // Returning the freed buddy
     return freedBuddy;
 }
 
+// Recursively builds up the freelist until it cannot
+// @param *resurrectedBuddy =
+// @param **buddies =
+// @param bitmap =
+// @param *base =
+// @param *mem =
+// @param exponent =
+// @param upper =
+// @param lower =
+void buildup(Buddy *resurrectedBuddy, Buddy **buddies, BBM bitmap, void *base, void *mem, int exponent, int upper, int lower)
+{
+    // Get the startOfList
+    Buddy *startOfList = buddies[exponent];
+
+    // Upper exponent that searches for the upper level
+    int upperExponentLevel = exponent + 1;
+
+    // Check if we are at the top
+    if (upperExponentLevel > upper)
+    {
+        // Change the bitmap as this is the last free possible
+        bbmclr(bitmap, base, mem, exponent);
+
+        // Building complete
+        return;
+    }
+
+    // Got to find out the buddy I just brought back
+    int leftorright = leftorrightbuddy(resurrectedBuddy, base, e2size(exponent + 1));
+
+    // Result from the lookfor()
+    int lookfor;
+
+    // The base address of the left and right buddy
+    // Ex: ...-->[Left]-->[Right]-->...
+    // ----------^Base^----------------------------
+    void *baseAddressOfBoth;
+
+    // Now we know if the freedbuddy is the left or right of the pair
+    // Check the other one
+    if (leftorright)
+    {
+        // Check the right one
+        // Calculate the size to look for
+        void *rightBuddy = (char *)resurrectedBuddy->currentLocation + e2size(exponent);
+
+        // Set the baseAddressOfBoth to the resurrectedBuddy
+        baseAddressOfBoth = resurrectedBuddy->currentLocation;
+
+        // Look to see if the address is in the free blocks
+        lookfor = lookforaddress(startOfList, rightBuddy);
+    }
+    else
+    {
+        // Check the left one
+        void *leftBuddy = (char *)resurrectedBuddy->currentLocation - e2size(exponent);
+
+        // Set the baseAddressOfBoth to
+        baseAddressOfBoth = leftBuddy;
+
+        // Look to see if the address is in the free blocks
+        lookfor = lookforaddress(startOfList, leftBuddy);
+    }
+
+    // Is the buddy found?
+    if (lookfor)
+    {
+        // Grab the bitmap level of the buddy that was brought back
+        BBM currentBitmap = resurrectedBuddy->bitmap;
+
+        // A pair of buddies are found, which means they will be built up so the bitmap should reflect that change
+        bbmclr(currentBitmap, base, mem, exponent);
+
+        // Remove the two buddies from the lower level so they can be tranferred to a higher level
+        Buddy *currentBuddy = startOfList;
+
+        // Loop through whole list of buddies
+        while (1)
+        {
+
+            // Found the base address to the pair of buddies
+            if (currentBuddy->currentLocation == baseAddressOfBoth)
+            {
+                // Left buddy found!
+                // Remove the pair
+                removenodepair(currentBuddy, buddies, base, exponent, currentBuddy->currentLocation == startOfList->currentLocation);
+
+                // No more looping
+                break;
+            }
+            else
+            {
+                // Keep iterating
+                currentBuddy = currentBuddy->nextBuddy;
+            }
+        }
+
+        // Get the buddy head at the next level exponent
+        Buddy *currentBuddyLevel = buddies[upperExponentLevel];
+
+        // Update the bitmap
+        currentBitmap = currentBuddyLevel->bitmap;
+
+        // Call another unallocation on the higher level
+        Buddy *freedBuddy = unallocation(buddies, currentBitmap, base, mem, upperExponentLevel, lower, isemptylist(currentBuddyLevel));
+
+        // Possibly could use some recursion...
+        // RECURSION TIME
+        return buildup(freedBuddy, buddies, currentBitmap, base, mem, upperExponentLevel, upper, lower);
+    }
+    else
+    {
+        // Buddy not found :(
+        return;
+    }
+}
+
 // Frees a block of memory in the freelist
-// f = A freelist
-// * base = The base addess of the pool
-// * mem = Address of the location where the allocated block is
-// e = Requested exponent
-// l = Lower exponent bound
+// @param f = A freelist
+// @param *base = The base addess of the pool
+// @param *mem = Address of the location where the allocated block is
+// @param e = Requested exponent
+// @param l = Lower exponent bound
 void freelistfree(FreeList f, void *base, void *mem, int e, int l)
 {
-
     // Aliasing
     int exponent = e, lower = l;
 
@@ -801,6 +1006,9 @@ void freelistfree(FreeList f, void *base, void *mem, int e, int l)
 
     // Grab the list representation of the freelist
     List *list = (List *)f;
+
+    // Grabbing upper exponent bounds
+    int upper = list->managementData[1];
 
     // Validating the base pool and mem offset address
     if (!base || !mem)
@@ -831,50 +1039,21 @@ void freelistfree(FreeList f, void *base, void *mem, int e, int l)
     // First bring back the buddy via unallocation
     Buddy *resurrectedBuddy = unallocation(buddies, currentBitmap, base, mem, exponent, lower, isemptylist(currentBuddyLevel));
 
-    // Got to find out the buddy I just brought back
-    int leftorright = leftorrightbuddy(base, resurrectedBuddy, e2size(exponent + 1));
-
-    // Result from the lookfor()
-    int lookfor;
-
-    // Now we know if the freedbuddy is the left or right of the pair
-    // Check the other one
-    if (leftorright)
-    {
-        // Check the right one
-        // Calculate the size to look for
-        void *rightBuddy = (char *)resurrectedBuddy->currentLocation + e2size(exponent);
-
-        // Look to see if the address is in the free blocks
-        lookfor = lookforaddress(currentBuddyLevel, rightBuddy);
-    }
-    else
-    {
-        // Check the left one
-        void *leftBuddy = (char *)resurrectedBuddy->currentLocation - e2size(exponent);
-
-        // Look to see if the address is in the free blocks
-        lookfor = lookforaddress(currentBuddyLevel, leftBuddy);
-    }
-
-    if (lookfor)
-    {
-        // Possibly could use some recursion...
-        // RECURSION TIME
-        buildup();
-    }
+    // Recursion to build it back up
+    buildup(resurrectedBuddy, buddies, currentBitmap, base, mem, exponent, upper, lower);
 
     // Block has been freed!
     return;
 }
 
 // Recursively goes down bitmaps to find the respective exponent
-// ** buddies = An array of buddies via pointers
-// * base = The base address of the pool
-// * mem = The offset address of where the bit is
-// upper = Upper exponent bound
-// lower = Lower exponent bound
-// currentExponent = The current exponent level in the buddy list being checked
+// @param **buddies = An array of buddies via pointers
+// @param *base = The base address of the pool
+// @param *mem = The offset address of where the bit is
+// @param upper = Upper exponent bound
+// @param lower = Lower exponent bound
+// @param currentExponent = The current exponent level in the buddy list being checked
+// @return Returns: size_t, The size of the exponent
 size_t exponentsearcher(Buddy **buddies, void *base, void *mem, int upper, int lower, int currentExponent)
 {
 
@@ -921,12 +1100,12 @@ size_t exponentsearcher(Buddy **buddies, void *base, void *mem, int upper, int l
 
 // Grabs the size of an allocated block in the freelist
 // (It is presumed you can only get the size of allocated blocks)
-// f = A freelist
-// * base = The base address of the pool
-// * mem = Address of the location where the block of memory is
-// l = Lower exponent bound
-// u = Upper exponent bound
-// Returns: int, size of the block
+// @param f = A freelist
+// @param *base = The base address of the pool
+// @param *mem = Address of the location where the block of memory is
+// @param l = Lower exponent bound
+// @param u = Upper exponent bound
+// @return Returns: int, size of the block
 int freelistsize(FreeList f, void *base, void *mem, int l, int u)
 {
 
@@ -983,9 +1162,9 @@ int freelistsize(FreeList f, void *base, void *mem, int l, int u)
 }
 
 // Outputting tool of the freelist, useful for debugging
-// f = A freelist
-// l = Lower exponent bound
-// u = Upper exponent bound
+// @param f = A freelist
+// @param l = Lower exponent bound
+// @param u = Upper exponent bound
 void freelistprint(FreeList f, int l, int u)
 {
 
