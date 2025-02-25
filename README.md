@@ -12,6 +12,14 @@ An implementation of the buddy system in c using a balloc module.
 
 Wow. I'm happy its complete. It's all I ever wanted from this homework assignment.
 
+It's rewarding to understand it conceptually and equally as rewarding to have the code. I want to say that my knowledge of pointers has increased at least 3 fold after doing the HW1 refresher. Also, it opened my eyes that implementations can have so many avenues, but the way I took was one that is convoluted and honestly overthought. BUT, I can imagine that the code can slowly be refactored down into a nice package. 
+
+The biggest things was understanding how to use a bitmap and how freelist should be structured. The balloc module acted more as a front and doesn't really provide much to the functionality of the allocator other than being the shiny headpiece. Going into detail about the bitmaps, it took me a second before it clicked that a bit in the bitmap represented two buddies. That was a revelation when I figured that out because thinking about offsets, transitioning between blocksize levels in the freelist, and worrying of walking onto a segfault mine washed away. It trivialized the thought process and made me more confident in the design process and allowed me to focus on how to code the implementation rather than what should the implementation even look like. 
+
+This assignment was no joke and I'll remember this one made me get little sleep on the days coming up to the due date. I felt like I was making decent progress in the first and second week, but man I was not aware at how much more there was to do.
+
+Takeaway note, thank god memory allocators already exist.
+
 ## Compiling and Using
 
 To compile the code, first cd into the `hw2` directory.
