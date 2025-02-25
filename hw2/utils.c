@@ -1,3 +1,11 @@
+/**
+ * A utility file full of useful functions for balloc
+ *
+ * @author Brian Wu
+ * @version 1.0
+ *
+ */
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
