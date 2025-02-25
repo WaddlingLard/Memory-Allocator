@@ -6,7 +6,8 @@
 #include "utils.h"
 #include "bbm.h"
 
-#define MAX_ORDER 10
+// You can request up to 2^50
+#define MAX_ORDER 50
 
 // A singly linked list that represents the blocks of memory for the index and its size
 struct Buddy
