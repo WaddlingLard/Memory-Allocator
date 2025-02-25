@@ -1,3 +1,10 @@
+/**
+ * A freelist for the balloc module.
+ *
+ * @author Brian Wu
+ * @version 1.0
+ *
+ */
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
@@ -301,12 +308,11 @@ int issingle(Buddy *currentBuddy)
 }
 
 // Acts very similar to allocaion but is purely used by buildup() to remove a pair of nodes
-// @param
-// @param
-// @param
-// @param
-// @param
-// @return
+// @param *currentBuddy = The left buddy
+// @param **buddies = The array of buddy head nodes
+// @param *base = The base address of the pool
+// @param exponent = The block size exponent
+// @param atHead = flag for case if currentBuddy is at head of list
 void removenodepair(Buddy *currentBuddy, Buddy **buddies, void *base, int exponent, int atHead)
 {
     // This method is called when there is at least two nodes
@@ -870,14 +876,14 @@ Buddy *unallocation(Buddy **buddies, BBM bitmap, void *base, void *mem, int expo
 }
 
 // Recursively builds up the freelist until it cannot
-// @param *resurrectedBuddy =
-// @param **buddies =
-// @param bitmap =
-// @param *base =
-// @param *mem =
-// @param exponent =
-// @param upper =
-// @param lower =
+// @param *resurrectedBuddy = The buddy that was unallocated
+// @param **buddies = The array of all the buddy list heads
+// @param bitmap = A bitmap at the exponent level
+// @param *base = The base address of the pool
+// @param *mem = The location of where the buddy was freed
+// @param exponent = Block size exponent
+// @param upper = Upper exponent bounds
+// @param lower = Lower exponent bounds
 void buildup(Buddy *resurrectedBuddy, Buddy **buddies, BBM bitmap, void *base, void *mem, int exponent, int upper, int lower)
 {
     // Get the startOfList

@@ -1,3 +1,12 @@
+/**
+ * A buddy bitmap documented by Brian Wu
+ *
+ * @author Jim Buffenbarger
+ * @author Brian Wu
+ * @version 1.0
+ *
+ */
+
 #include "bbm.h"
 #include "bm.h"
 #include "utils.h"

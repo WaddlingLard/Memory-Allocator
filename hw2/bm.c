@@ -1,3 +1,12 @@
+/**
+ * A bitmap documented by Brian Wu
+ *
+ * @author Jim Buffenbarger
+ * @author Brian Wu
+ * @version 1.0
+ *
+ */
+
 #include <stdlib.h>
 #include <string.h>
 
