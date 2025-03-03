@@ -41,6 +41,8 @@ Note: Main will contain all the tests. They are mostly just output statements bu
 
 ## Results 
 
+The tests that will be ran are 3 pool will be created and go through several methods and then be deleted. While it may seeem not much they do go through multiple tests to account for overall completeness and do a decent job at showing that the memory allocator is working!
+
 Balloc looks really solid. I'm happy with how it turned out and it does a great job. It probably is not even close to being the most optimal solution, but I'm so happy I figured it out and got all of the methods working. I would give a confidence rating of 90-95% that it works but more testing would always be nice to confirm anyone's suspicions.
 
 The deq looks promising, I haven't been able to implement anything that crazy so you'd definitely need to take a better look at it. However, it does look ok for the time being so with at least 70% confidence it appears to work! I know that isn't the most convincing argument but it does the most basic iterations of the operations of put, get, ith, and rem so that is a start.
