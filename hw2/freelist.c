@@ -367,8 +367,8 @@ void removenodepair(Buddy *currentBuddy, Buddy **buddies, void *base, int expone
             if (nextBuddy->currentLocation == targetAddress)
             {
                 // It is what we want to delete
-                // Get the nextnextBuddy to delete
-                Buddy *nextnextBuddy = nextBuddy;
+                // Get the nextnextBuddy to delete (right node of buddy)
+                Buddy *nextnextBuddy = nextBuddy->nextBuddy;
 
                 // Is the right buddy have something after
                 if (issingle(nextnextBuddy))
