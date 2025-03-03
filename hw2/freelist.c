@@ -316,6 +316,8 @@ int issingle(Buddy *currentBuddy)
 void removenodepair(Buddy *currentBuddy, Buddy **buddies, void *base, int exponent, int atHead)
 {
     // This method is called when there is at least two nodes
+    // Address to look for
+    void *targetAddress = currentBuddy->currentLocation;
 
     // Is the pair at the head
     if (atHead)
@@ -362,7 +364,7 @@ void removenodepair(Buddy *currentBuddy, Buddy **buddies, void *base, int expone
             Buddy *nextBuddy = startOfList->nextBuddy;
 
             // Does the next node == the node pair we want to delete?
-            if (nextBuddy->currentLocation == currentBuddy->currentLocation)
+            if (nextBuddy->currentLocation == targetAddress)
             {
                 // It is what we want to delete
                 // Get the nextnextBuddy to delete
@@ -795,6 +797,15 @@ Buddy *unallocation(Buddy **buddies, BBM bitmap, void *base, void *mem, int expo
         resurrectedBuddy->currentLocation = mem;
 
         // Find where to insert in list
+
+        // Check if allocation already exists
+        if (mem == currentBuddyLevel->currentLocation)
+        {
+            // Outputting error message
+            fprintf(stderr, "Should not be possible to do this operation!\n");
+            exit(1);
+        }
+
         // Base Case: Is it at the start?
         if (mem < currentBuddyLevel->currentLocation)
         {
@@ -821,6 +832,13 @@ Buddy *unallocation(Buddy **buddies, BBM bitmap, void *base, void *mem, int expo
             // If this is false that means we are at the end of the list
             while (nextBuddy != NULL)
             {
+                // Check if allocation already exists
+                if (mem == currentBuddyLevel->currentLocation)
+                {
+                    // Outputting error message
+                    fprintf(stderr, "Should not be possible to do this operation!\n");
+                    exit(1);
+                }
 
                 // Grabbing freed buddy location
                 void *ressurectedBuddyLocation = resurrectedBuddy->currentLocation;
@@ -906,7 +924,7 @@ void buildup(Buddy *resurrectedBuddy, Buddy **buddies, BBM bitmap, void *base, v
     int leftorright = leftorrightbuddy(resurrectedBuddy, base, e2size(exponent + 1));
 
     // Result from the lookfor()
-    int lookfor;
+    int lookfor = -1;
 
     // The base address of the left and right buddy
     // Ex: ...-->[Left]-->[Right]-->...
@@ -979,11 +997,11 @@ void buildup(Buddy *resurrectedBuddy, Buddy **buddies, BBM bitmap, void *base, v
         currentBitmap = currentBuddyLevel->bitmap;
 
         // Call another unallocation on the higher level
-        Buddy *freedBuddy = unallocation(buddies, currentBitmap, base, mem, upperExponentLevel, lower, isemptylist(currentBuddyLevel));
+        Buddy *freedBuddy = unallocation(buddies, currentBitmap, base, baseAddressOfBoth, upperExponentLevel, lower, isemptylist(currentBuddyLevel));
 
         // Possibly could use some recursion...
         // RECURSION TIME
-        return buildup(freedBuddy, buddies, currentBitmap, base, mem, upperExponentLevel, upper, lower);
+        return buildup(freedBuddy, buddies, currentBitmap, base, baseAddressOfBoth, upperExponentLevel, upper, lower);
     }
     else
     {

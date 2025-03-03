@@ -126,21 +126,23 @@ void testpool3()
     bprint(pool3);
 
     // Test 9: Multiple smallest size allocations
-    fprintf(stdout, "\nAllocations of size 2, 4 times!\n");
+    fprintf(stdout, "\nAllocations of size 2, 5 times!\n");
     void *allocation1 = balloc(pool3, 2);
     void *allocation2 = balloc(pool3, 2);
     void *allocation3 = balloc(pool3, 2);
     void *allocation4 = balloc(pool3, 2);
+    void *allocation5 = balloc(pool3, 2);
 
     // Output should reflect those allocations
     bprint(pool3);
 
     // Test 10: Free allocations in jumbled order
-    fprintf(stdout, "\nFreeing all allocations in reversed order!\n");
-    bfree(pool3, allocation4);
+    fprintf(stdout, "\nFreeing all allocations in jumbled order!\n");
     bfree(pool3, allocation3);
-    bfree(pool3, allocation2);
+    bfree(pool3, allocation5);
     bfree(pool3, allocation1);
+    bfree(pool3, allocation4);
+    bfree(pool3, allocation2);
 
     // Output should return to constructed state
     bprint(pool3);

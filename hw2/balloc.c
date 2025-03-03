@@ -62,17 +62,17 @@ Balloc bcreate(unsigned int size, int l, int u)
         // Size is not a positive number
 
         // Output error message
-        fprintf(stderr, "Invalid size call. Requires a nonzero positive number!");
+        fprintf(stderr, "Invalid size call. Requires a nonzero positive number!\n");
         exit(1);
     }
 
     // Checking size of l (lowest) and u (highest) are valid
-    if (lower < 0 || upper < 0)
+    if (lower <= 0 || upper < 0)
     {
         // Lower or upper bounds is not a positive number
 
         // Output error message
-        fprintf(stderr, "Invalid size constraints provided. l and u should be nonzero positive numbers!");
+        fprintf(stderr, "Invalid size constraints provided. l and u should be nonzero positive numbers!\n");
         exit(1);
     }
     else if (lower > upper)
@@ -80,7 +80,7 @@ Balloc bcreate(unsigned int size, int l, int u)
         // Lower bounds is greater than upper bounds (should not be possible)
 
         // Output error message
-        fprintf(stderr, "Upper bound is less than lower bounds. That makes no sense...");
+        fprintf(stderr, "Upper bound is less than lower bounds. That makes no sense...\n");
         exit(1);
     }
 
@@ -209,7 +209,7 @@ void *balloc(Balloc pool, unsigned int size)
         // Size requested is nothing
 
         // Outputting error message
-        fprintf(stderr, "Size requested is not valid (must be positive integer)");
+        fprintf(stderr, "Size requested is not valid (must be positive integer)\n");
         exit(1);
     }
     else
@@ -289,7 +289,7 @@ void bfree(Balloc pool, void *mem)
         // Memory is not at a valid location
 
         // Outputting error message
-        fprintf(stderr, "Memory is not a valid address");
+        fprintf(stderr, "Memory is not a valid address\n");
         exit(1);
     }
 
@@ -331,7 +331,7 @@ unsigned int bsize(Balloc pool, void *mem)
         // Pool does not exist
 
         // Outputting error message
-        fprintf(stderr, "Pool does not exist!");
+        fprintf(stderr, "Pool does not exist!\n");
         exit(1);
     }
 
@@ -341,7 +341,7 @@ unsigned int bsize(Balloc pool, void *mem)
         // Memory is not at a valid location
 
         // Outputting error message
-        fprintf(stderr, "Memory is not a valid address");
+        fprintf(stderr, "Memory is not a valid address\n");
         exit(1);
     }
 
@@ -380,7 +380,7 @@ void bprint(Balloc pool)
         // Pool does not exist
 
         // Outputting error message
-        fprintf(stderr, "Pool does not exist!");
+        fprintf(stderr, "Pool does not exist!\n");
         exit(1);
     }
     else
@@ -411,11 +411,13 @@ void bprint(Balloc pool)
     int lower = ballocPool->managementData[0];
     int upper = ballocPool->managementData[1];
     int range = ballocPool->managementData[2];
+    int size = ballocPool->size;
 
     // Outputting management data
     fprintf(stdout, "Lower Bounds (2^N): %d\n", lower);
     fprintf(stdout, "Upper Bounds (2^N): %d\n", upper);
     fprintf(stdout, "Range (Lower-Upper): %d\n", range);
+    fprintf(stdout, "Size of Pool: %d\n", size);
 
     // Whitespace
     fprintf(stdout, "--------------------------\n");
