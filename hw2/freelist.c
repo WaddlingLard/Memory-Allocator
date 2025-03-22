@@ -316,13 +316,16 @@ int issingle(Buddy *currentBuddy)
 void removenodepair(Buddy *currentBuddy, Buddy **buddies, void *base, int exponent, int atHead)
 {
     // This method is called when there is at least two nodes
-    // Address to look for
+    // fprintf(stdout, "Removing node pair! Base address is: %p\n", currentBuddy->currentLocation);
+
+    // Address to lookfor
     void *targetAddress = currentBuddy->currentLocation;
 
     // Is the pair at the head
     if (atHead)
     {
         // Deal with removing two nodes at the start of the list
+        // fprintf(stdout, "At the head!\n");
 
         // Get the next buddy so it will be deleted as well
         Buddy *nextBuddy = currentBuddy->nextBuddy;
@@ -366,17 +369,25 @@ void removenodepair(Buddy *currentBuddy, Buddy **buddies, void *base, int expone
             // Does the next node == the node pair we want to delete?
             if (nextBuddy->currentLocation == targetAddress)
             {
+
+                // fprintf(stdout, "Found base buddy! Location: %p\n", nextBuddy->currentLocation);
+
                 // It is what we want to delete
                 // Get the nextnextBuddy to delete (right node of buddy)
                 Buddy *nextnextBuddy = nextBuddy->nextBuddy;
+
+                // fprintf(stdout, "Location of the right buddy: %p\n", nextnextBuddy->currentLocation);
 
                 // Is the right buddy have something after
                 if (issingle(nextnextBuddy))
                 {
                     // There no node after
+                    // fprintf(stdout, "Nothing pointing after the right buddy!\n");
 
                     // Adjust pointers
                     startOfList->nextBuddy = NULL;
+
+                    // fprintf(stdout, "The buddy previous to location of left and right buddy is: %p\n", startOfList->currentLocation);
 
                     // Free left and right nodes
                     mmfree(nextBuddy, sizeof(Buddy));
@@ -385,9 +396,12 @@ void removenodepair(Buddy *currentBuddy, Buddy **buddies, void *base, int expone
                 else
                 {
                     // There is a node after
+                    // fprintf(stdout, "Something pointing after the right buddy!\n");
 
                     // Adjust pointers
                     startOfList->nextBuddy = nextnextBuddy->nextBuddy;
+
+                    // fprintf(stdout, "The buddy previous to location of left and right buddy is: %p\n", startOfList->currentLocation);
 
                     // Free left and right nodes
                     mmfree(nextBuddy, sizeof(Buddy));
@@ -698,11 +712,13 @@ int leftorrightbuddy(Buddy *currentBuddy, void *base, int sizeOfLargerBlock)
     if (offset % sizeOfLargerBlock == 0)
     {
         // Left block return value
+        // fprintf(stdout, "This is the left buddy: %p\n", currentBuddyLocation);
         return 1;
     }
     else
     {
         // Right block return value
+        // fprintf(stdout, "This is the right buddy: %p\n", currentBuddyLocation);
         return 0;
     }
 }
@@ -774,6 +790,7 @@ Buddy *unallocation(Buddy **buddies, BBM bitmap, void *base, void *mem, int expo
     if (emptyListFlag)
     {
         // List is empty
+        // fprintf(stdout, "List is empty!\n");
         // Simple, just modify the front of the list
 
         // Setting the address to the location of where the allocation occured
@@ -802,7 +819,7 @@ Buddy *unallocation(Buddy **buddies, BBM bitmap, void *base, void *mem, int expo
         if (mem == currentBuddyLevel->currentLocation)
         {
             // Outputting error message
-            fprintf(stderr, "Should not be possible to do this operation!\n");
+            fprintf(stderr, "SHOULD NOT BE POSSIBLE TO DO THIS OPERATION!\n");
             exit(1);
         }
 
@@ -832,11 +849,12 @@ Buddy *unallocation(Buddy **buddies, BBM bitmap, void *base, void *mem, int expo
             // If this is false that means we are at the end of the list
             while (nextBuddy != NULL)
             {
+
                 // Check if allocation already exists
-                if (mem == currentBuddyLevel->currentLocation)
+                if (mem == currentBuddy->currentLocation)
                 {
                     // Outputting error message
-                    fprintf(stderr, "Should not be possible to do this operation!\n");
+                    fprintf(stderr, "SHOULD NOT BE POSSIBLE TO DO THIS OPERATION!\n");
                     exit(1);
                 }
 
@@ -889,8 +907,48 @@ Buddy *unallocation(Buddy **buddies, BBM bitmap, void *base, void *mem, int expo
         }
     }
 
+    // fprintf(stdout, "Location of freed buddy: %p\n", freedBuddy->currentLocation);
+
     // Returning the freed buddy
     return freedBuddy;
+}
+
+// Searches for the buddy in the freelist
+// @param directionFlag, 1 for right, 0 for left
+// @param *baseAddressOfBoth, the base address to be for the buddy pair treated as a pointer to the pointer (makes sense?)
+// @param *resurrectedBuddy, the buddy brought back from an unallocation
+// @param exponent, 2 base exponent of the block size
+// @return int, 1 for found and 0 for fail
+int findbuddy(int directionFlag, void **baseAddressOfBoth, Buddy *startOfList, Buddy *resurrectedBuddy, int exponent)
+{
+
+    if (directionFlag)
+    {
+        // Check the right one
+        // Calculate the size to look for
+        void *rightBuddy = (char *)resurrectedBuddy->currentLocation + e2size(exponent);
+
+        // fprintf(stdout, "Looking for right buddy: %p\n", rightBuddy);
+
+        // Set the baseAddressOfBoth to the resurrectedBuddy
+        *baseAddressOfBoth = resurrectedBuddy->currentLocation;
+
+        // Look to see if the address is in the free blocks
+        return lookforaddress(startOfList, rightBuddy);
+    }
+    else
+    {
+        // Check the left one
+        void *leftBuddy = (char *)resurrectedBuddy->currentLocation - e2size(exponent);
+
+        // fprintf(stdout, "Looking for left buddy: %p\n", leftBuddy);
+
+        // Set the baseAddressOfBoth to the left buddy
+        *baseAddressOfBoth = leftBuddy;
+
+        // Look to see if the address is in the free blocks
+        return lookforaddress(startOfList, leftBuddy);
+    }
 }
 
 // Recursively builds up the freelist until it cannot
@@ -910,52 +968,37 @@ void buildup(Buddy *resurrectedBuddy, Buddy **buddies, BBM bitmap, void *base, v
     // Upper exponent that searches for the upper level
     int upperExponentLevel = exponent + 1;
 
+    // Result from the lookfor()
+    int lookfor = -1;
+
+    // Got to find out the buddy I just brought back
+    int leftorright = leftorrightbuddy(resurrectedBuddy, base, e2size(upperExponentLevel));
+
+    // The base address of the left and right buddy
+    // Ex: ...-->[Left]-->[Right]-->...
+    // ----------^Base^----------------------------
+    void *baseAddressOfBoth = NULL;
+
     // Check if we are at the top
     if (upperExponentLevel > upper)
     {
-        // Change the bitmap as this is the last free possible
-        bbmclr(bitmap, base, mem, exponent);
+        // Look to see if buddy exists
+        lookfor = findbuddy(leftorright, &baseAddressOfBoth, startOfList, resurrectedBuddy, exponent);
+
+        if (lookfor)
+        {
+            // Buddy is found! You can clear the map.
+            // Change the bitmap as this is the last free possible
+            bbmclr(bitmap, base, mem, exponent);
+        }
 
         // Building complete
         return;
     }
 
-    // Got to find out the buddy I just brought back
-    int leftorright = leftorrightbuddy(resurrectedBuddy, base, e2size(exponent + 1));
-
-    // Result from the lookfor()
-    int lookfor = -1;
-
-    // The base address of the left and right buddy
-    // Ex: ...-->[Left]-->[Right]-->...
-    // ----------^Base^----------------------------
-    void *baseAddressOfBoth;
-
     // Now we know if the freedbuddy is the left or right of the pair
     // Check the other one
-    if (leftorright)
-    {
-        // Check the right one
-        // Calculate the size to look for
-        void *rightBuddy = (char *)resurrectedBuddy->currentLocation + e2size(exponent);
-
-        // Set the baseAddressOfBoth to the resurrectedBuddy
-        baseAddressOfBoth = resurrectedBuddy->currentLocation;
-
-        // Look to see if the address is in the free blocks
-        lookfor = lookforaddress(startOfList, rightBuddy);
-    }
-    else
-    {
-        // Check the left one
-        void *leftBuddy = (char *)resurrectedBuddy->currentLocation - e2size(exponent);
-
-        // Set the baseAddressOfBoth to
-        baseAddressOfBoth = leftBuddy;
-
-        // Look to see if the address is in the free blocks
-        lookfor = lookforaddress(startOfList, leftBuddy);
-    }
+    lookfor = findbuddy(leftorright, &baseAddressOfBoth, startOfList, resurrectedBuddy, exponent);
 
     // Is the buddy found?
     if (lookfor)
@@ -978,6 +1021,7 @@ void buildup(Buddy *resurrectedBuddy, Buddy **buddies, BBM bitmap, void *base, v
             {
                 // Left buddy found!
                 // Remove the pair
+                // fprintf(stdout, "Base buddy found! Base location at: %p\n", currentBuddy->currentLocation);
                 removenodepair(currentBuddy, buddies, base, exponent, currentBuddy->currentLocation == startOfList->currentLocation);
 
                 // No more looping
@@ -1006,6 +1050,7 @@ void buildup(Buddy *resurrectedBuddy, Buddy **buddies, BBM bitmap, void *base, v
     else
     {
         // Buddy not found :(
+        // fprintf(stdout, "Buddy not found :(\n");
         return;
     }
 }
@@ -1107,6 +1152,8 @@ size_t exponentsearcher(Buddy **buddies, void *base, void *mem, int upper, int l
     {
         // Location is marked allocated
         // Get new level to search
+        // fprintf(stdout, "Scanning %d level of bitmap!\n", currentExponent);
+        // bbmprt(currentBitmap);
 
         // This means we need to go to a lower level
         // WOOP WOOP THIS IS RECURSION
